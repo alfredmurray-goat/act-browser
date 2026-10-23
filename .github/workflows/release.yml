@@ -1,0 +1,77 @@
+# Builds Act Browser and publishes a GitHub release when a version tag is
+# pushed:
+#
+#   npm version 0.3.0 --no-git-tag-version   (or edit package.json)
+#   git commit -am "Act Browser 0.3.0" && git tag v0.3.0 && git push --tags
+#
+# Installed copies find the release, check its signature and update
+# themselves. Needs the ACT_UPDATE_KEY secret (see scripts/keygen.mjs).
+
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [macos-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Tag matches package.json
+        run: |
+          version=$(node -p "require('./package.json').version")
+          if [ "v$version" != "$GITHUB_REF_NAME" ]; then
+            echo "Tag $GITHUB_REF_NAME doesn't match package.json version $version"
+            exit 1
+          fi
+
+      - name: Build and package
+        env:
+          ACT_UPDATE_KEY: ${{ secrets.ACT_UPDATE_KEY }}
+        run: |
+          if [ -z "$ACT_UPDATE_KEY" ]; then
+            echo "ACT_UPDATE_KEY isn't set, installed browsers would refuse this update."
+            exit 1
+          fi
+          npm run package
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: act-browser-${{ matrix.os }}
+          path: |
+            dist/*.dmg
+            dist/*.zip
+            dist/*.zip.sig
+            dist/*.tar.xz
+            dist/*.tar.xz.sig
+          if-no-files-found: error
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" dist/* \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "Act Browser ${GITHUB_REF_NAME#v}" \
+            --generate-notes

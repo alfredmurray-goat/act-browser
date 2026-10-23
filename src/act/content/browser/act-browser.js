@@ -66,6 +66,7 @@ var ActBrowser = {
       ActSiteActions,
       ActContextMenu,
       ActUploadMenu,
+      ActUpdateBar,
     ]) {
       try {
         part.init();
@@ -81,6 +82,7 @@ var ActBrowser = {
     ActSiteActions.uninit();
     ActWorkspaces.uninit();
     ActLayout.uninit();
+    ActUpdateBar.uninit();
   },
 
   _applyAttributes() {

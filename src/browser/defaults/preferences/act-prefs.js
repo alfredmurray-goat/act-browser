@@ -45,6 +45,16 @@ pref("act.upload.clipboard", true);
 pref("act.agents.enabled", false);
 pref("act.agents.port", 9222);
 
+// Sites can't stop other sites from showing them in an iframe: we drop
+// X-Frame-Options and CSP frame-ancestors from framed responses. Firefox
+// keeps framed sites' cookies separate, which limits clickjacking, but set
+// this to false to get the stock Firefox behaviour back.
+pref("act.framing.allowAll", true);
+
+// Updates come from the project's GitHub releases, see ActUpdater.
+pref("act.update.enabled", true);
+pref("act.update.intervalHours", 6);
+
 pref("act.workspaces.enabled", true);
 pref("act.workspaces.list", "[{\"id\":\"home\",\"name\":\"Home\",\"icon\":\"🏠\"}]");
 

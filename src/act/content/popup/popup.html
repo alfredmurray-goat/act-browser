@@ -67,7 +67,19 @@
     </div>
     <p id="agent-status" class="hint"></p>
 
-    <p class="hint about">Act Browser · <span id="version"></span></p>
+    <h2>Privacy &amp; security</h2>
+    <label class="switch"><input type="checkbox" data-pref="act.framing.allowAll"><span>Let sites show any site in a frame</span></label>
+    <p class="hint">Ignores "don't embed me" rules (X-Frame-Options, frame-ancestors). Framed sites still don't get your cookies.</p>
+
+    <h2>Updates</h2>
+    <label class="switch"><input type="checkbox" data-pref="act.update.enabled"><span>Update automatically</span></label>
+    <div class="row wrap">
+      <button id="check-updates">Check now</button>
+      <button id="restart-update" class="primary" hidden>Restart to update</button>
+    </div>
+    <p id="update-status" class="hint"></p>
+
+    <p class="hint about">Act Browser <span id="act-version"></span> · <span id="version"></span></p>
   </section>
 </body>
 </html>
