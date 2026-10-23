@@ -34,27 +34,56 @@ var ActLayout = {
   },
 
   // Top of the sidebar: an empty, draggable row where macOS puts the window
-  // buttons, then the workspace name.
+  // buttons, then the workspace name with the workspace switcher next to it
+  // (act-workspaces.js adds that).
   _buildHeader() {
     let header = document.createXULElement("vbox");
     header.id = "act-sidebar-header";
     let titlebar = document.createXULElement("box");
     titlebar.id = "act-sidebar-titlebar";
+    let row = document.createXULElement("hbox");
+    row.id = "act-sidebar-titlerow";
+    row.setAttribute("align", "center");
     let title = document.createXULElement("label");
     title.id = "act-workspace-title";
     title.setAttribute("crop", "end");
     title.setAttribute("context", "act-workspace-menu");
-    header.append(titlebar, title);
+    row.append(title);
+    header.append(titlebar, row);
     document.getElementById("sidebar-container").prepend(header);
   },
 
-  // Bottom of the sidebar, one row: workspaces on the left, downloads and
-  // extensions on the right (act-workspaces.js and act-extensions.js fill
-  // it).
+  // Bottom of the sidebar: settings, bookmarks and history, then downloads
+  // (act-extensions.js). Extension icons stack up from its right end.
   _buildFooter() {
     let footer = document.createXULElement("hbox");
     footer.id = "act-sidebar-footer";
     footer.setAttribute("align", "center");
+
+    let button = (id, label, icon, onCommand) => {
+      let b = document.createXULElement("toolbarbutton");
+      b.id = id;
+      b.className = "toolbarbutton-1 act-sidebar-tool";
+      b.setAttribute("tooltiptext", label);
+      b.setAttribute("aria-label", label);
+      b.setAttribute("image", icon);
+      b.addEventListener("command", onCommand);
+      return b;
+    };
+    footer.append(
+      button("act-tool-settings", "Settings", "chrome://global/skin/icons/settings.svg", () =>
+        openPreferences()
+      ),
+      button(
+        "act-tool-bookmarks",
+        "Saved sites (bookmarks)",
+        "chrome://browser/skin/bookmark-hollow.svg",
+        () => SidebarController.toggle("viewBookmarksSidebar")
+      ),
+      button("act-tool-history", "History", "chrome://browser/skin/history.svg", () =>
+        SidebarController.toggle("viewHistorySidebar")
+      )
+    );
     document.getElementById("sidebar-container").append(footer);
   },
 

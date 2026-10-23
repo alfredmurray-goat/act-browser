@@ -1,5 +1,6 @@
 // Builds Act Browser into dist/: takes the official Firefox release, adds
 // the Act chrome code from src/, swaps the branding and re-signs (macOS).
+// Works on macOS, Linux and 64 bit Windows, each building for itself.
 //
 //   npm run build            normal build
 //   npm run build -- --dev   for development, see scripts/dev.mjs
@@ -17,16 +18,21 @@ import {
   appLayout,
   config,
   copy,
+  isLinux,
+  isMac,
   isMain,
+  isWindows,
   log,
   platform,
   requirePlatform,
   rm,
   run,
+  unzipTo,
+  zipContents,
 } from "./lib.mjs";
 
 // Files from src/ and where they go, relative to the Firefox resources
-// directory (Contents/Resources on macOS, the install directory on Linux).
+// directory (Contents/Resources on macOS, the install folder elsewhere).
 const INSTALL = [
   ["act.cfg", "act.cfg"],
   ["defaults/pref/autoconfig.js", "defaults/pref/autoconfig.js"],
@@ -112,16 +118,14 @@ function rebrandOmni(resources) {
   let omni = path.join(resources, "browser", "omni.ja");
   let tmp = fs.mkdtempSync(path.join(os.tmpdir(), "act-omni-"));
   try {
-    // omni.ja has a slightly unusual header, unzip warns about it (exit 1/2)
-    run("unzip", ["-q", "-o", omni, "-d", tmp], { okCodes: [0, 1, 2], quiet: true });
+    unzipTo(omni, tmp);
     for (let [inside, ours] of Object.entries(BRAND_FILES)) {
       let target = path.join(tmp, inside);
       if (fs.existsSync(path.dirname(target))) {
         fs.copyFileSync(path.join(BRANDING, ours), target);
       }
     }
-    rm(omni);
-    run("zip", ["-q", "-r", "-9", "-X", "-D", omni, "."], { cwd: tmp });
+    zipContents(tmp, omni);
   } finally {
     rm(tmp);
   }
@@ -170,7 +174,8 @@ function refreshIconCache(app) {
   run(lsregister, ["-f", app], { okCodes: [0, 1], quiet: true });
 }
 
-function rebrandLinux(layout) {
+// Window and taskbar icons on Linux and Windows.
+function rebrandIcons(layout) {
   let icons = path.join(layout.resources, "browser", "chrome", "icons", "default");
   for (let size of [16, 32, 48, 64, 128]) {
     let target = path.join(icons, `default${size}.png`);
@@ -178,25 +183,111 @@ function rebrandLinux(layout) {
       fs.copyFileSync(path.join(BRANDING, "icons", `icon${size}.png`), target);
     }
   }
+}
+
+function rebrandLinux(layout) {
   let launcher = path.join(layout.app, "act-browser");
   fs.writeFileSync(launcher, '#!/bin/sh\nexec "$(dirname "$(readlink -f "$0")")/firefox" "$@"\n');
   fs.chmodSync(launcher, 0o755);
-  fs.writeFileSync(
-    path.join(layout.app, "act-browser.desktop"),
-    [
-      "[Desktop Entry]",
-      `Name=${config.name}`,
-      "Comment=Browse the web",
-      "Exec=act-browser %u",
-      "Icon=act-browser",
-      "Terminal=false",
-      "Type=Application",
-      "Categories=Network;WebBrowser;",
-      "MimeType=text/html;x-scheme-handler/http;x-scheme-handler/https;",
-      "StartupWMClass=firefox",
-      "",
-    ].join("\n")
-  );
+  fs.copyFileSync(path.join(BRANDING, "icons", "icon256.png"), path.join(layout.app, "act-browser.png"));
+  fs.writeFileSync(path.join(layout.app, "act-browser.desktop"), desktopEntry("act-browser"));
+}
+
+export function desktopEntry(exec) {
+  return [
+    "[Desktop Entry]",
+    `Name=${config.name}`,
+    "GenericName=Web Browser",
+    "Comment=Browse the web",
+    `Exec=${exec} %u`,
+    "Icon=act-browser",
+    "Terminal=false",
+    "Type=Application",
+    "Categories=Network;WebBrowser;",
+    "MimeType=text/html;x-scheme-handler/http;x-scheme-handler/https;",
+    "StartupWMClass=firefox",
+    "",
+  ].join("\n");
+}
+
+// A Windows .ico made of our PNGs (Windows Vista and later read PNG
+// entries directly).
+export function writeIco(file) {
+  let images = [16, 32, 48, 64, 128, 256].map(size => ({
+    size,
+    data: fs.readFileSync(path.join(BRANDING, "icons", `icon${size}.png`)),
+  }));
+  let header = Buffer.alloc(6);
+  header.writeUInt16LE(1, 2); // type: icon
+  header.writeUInt16LE(images.length, 4);
+  let offset = 6 + 16 * images.length;
+  let entries = images.map(({ size, data }) => {
+    let entry = Buffer.alloc(16);
+    entry.writeUInt8(size >= 256 ? 0 : size, 0);
+    entry.writeUInt8(size >= 256 ? 0 : size, 1);
+    entry.writeUInt16LE(1, 4); // color planes
+    entry.writeUInt16LE(32, 6); // bits per pixel
+    entry.writeUInt32LE(data.length, 8);
+    entry.writeUInt32LE(offset, 12);
+    offset += data.length;
+    return entry;
+  });
+  fs.writeFileSync(file, Buffer.concat([header, ...entries, ...images.map(i => i.data)]));
+}
+
+// rcedit (from the Electron project) swaps an .exe's icon and name.
+const RCEDIT_URL = "https://github.com/electron/rcedit/releases/download/v2.0.0/rcedit-x64.exe";
+
+async function rcedit() {
+  let exe = path.join(CACHE, "rcedit-x64.exe");
+  if (!fs.existsSync(exe)) {
+    log("Downloading rcedit…");
+    let response = await fetch(RCEDIT_URL);
+    if (!response.ok) {
+      throw new Error(`Couldn't download rcedit: ${response.status}`);
+    }
+    fs.writeFileSync(exe, Buffer.from(await response.arrayBuffer()));
+  }
+  return exe;
+}
+
+async function rebrandWindows(layout) {
+  let ico = path.join(layout.app, "act.ico");
+  writeIco(ico);
+  let tool = await rcedit();
+  for (let name of ["firefox.exe", "private_browsing.exe"]) {
+    let exe = path.join(layout.app, name);
+    if (!fs.existsSync(exe)) {
+      continue;
+    }
+    run(tool, [
+      exe,
+      "--set-icon",
+      ico,
+      "--set-version-string",
+      "ProductName",
+      config.name,
+      "--set-version-string",
+      "FileDescription",
+      config.name,
+      "--set-version-string",
+      "CompanyName",
+      config.name,
+    ]);
+  }
+  // Start menu tiles.
+  let tiles = path.join(layout.app, "browser", "VisualElements");
+  for (let [file, size] of [
+    ["VisualElements_150.png", 256],
+    ["VisualElements_70.png", 128],
+    ["PrivateBrowsing_150.png", 256],
+    ["PrivateBrowsing_70.png", 128],
+  ]) {
+    let target = path.join(tiles, file);
+    if (fs.existsSync(target)) {
+      fs.copyFileSync(path.join(BRANDING, "icons", `icon${size}.png`), target);
+    }
+  }
 }
 
 export async function build({ outDir = DIST } = {}) {
@@ -208,7 +299,7 @@ export async function build({ outDir = DIST } = {}) {
   log(`Building ${config.name} on Firefox ${config.firefox.version}…`);
   rm(layout.app);
   fs.mkdirSync(outDir, { recursive: true });
-  if (platform == "mac") {
+  if (isMac) {
     // APFS clones: the copy shares disk space with the cached Firefox until
     // a file changes, so a build costs a lot less than a full copy.
     run("cp", ["-cR", source, layout.app]);
@@ -220,13 +311,17 @@ export async function build({ outDir = DIST } = {}) {
   await bundleExtensions(layout.resources);
   rebrandOmni(layout.resources);
 
-  if (platform == "mac") {
+  if (isMac) {
     rebrandMac(layout);
     log("Signing (ad hoc)…");
     run("xattr", ["-cr", layout.app]);
     run("codesign", ["--force", "--deep", "--sign", "-", layout.app], { quiet: true });
     refreshIconCache(layout.app);
-  } else {
+  } else if (isWindows) {
+    rebrandIcons(layout);
+    await rebrandWindows(layout);
+  } else if (isLinux) {
+    rebrandIcons(layout);
     rebrandLinux(layout);
   }
 

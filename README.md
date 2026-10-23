@@ -21,6 +21,29 @@ structured data: what a site is, what you can do there, opening hours,
 prices, events. That's where the name comes from. **Act**uent, and the
 browser should help you *act* on a page, not just read it.
 
+## Install
+
+Grab the latest from the [releases page](https://github.com/alfredmurray-goat/act-browser/releases/latest):
+
+| | Download | |
+| --- | --- | --- |
+| **macOS** | `Act-Browser-…-mac.dmg` | Open it and drag Act Browser to Applications |
+| **Windows** | `Act-Browser-…-win64-setup.exe` | Installs for your user, no admin needed |
+| **Linux** | `act-browser_…_amd64.deb` | `sudo apt install ./act-browser_…_amd64.deb` |
+| | `Act-Browser-…-linux-x86_64.tar.xz` | Unpack anywhere and run `act-browser/act-browser` |
+
+After that it updates itself (the `.deb` installs into `/opt`, which it
+can't write to; install the next `.deb` instead, or use the tarball).
+
+The first time you open it:
+
+- **macOS** says it can't check the app for malware, because it isn't
+  notarized with an Apple developer account. Open *System Settings ›
+  Privacy & Security*, scroll down and click *Open Anyway*. Only needed
+  once.
+- **Windows** SmartScreen may say it "protected your PC". Click *More info ›
+  Run anyway*. Same reason: no paid code signing certificate yet.
+
 ## Features
 
 **Layout**
@@ -35,7 +58,8 @@ browser should help you *act* on a page, not just read it.
 - Workspaces: separate sets of tabs in one window. Pinned tabs are shared
   between all of them. Right click a tab to move it, right click a workspace
   to rename it or change its icon.
-- Downloads and extension buttons in a row at the bottom of the sidebar,
+- Settings, saved sites, history and downloads along the bottom of the
+  sidebar, with your extensions' icons stacked up the right hand side
   instead of behind the puzzle piece menu. Popups and badges work as usual.
 - uBlock Origin comes preinstalled. It's a normal add-on, you can remove it.
 - Upload from the clipboard, like Opera: when a site asks for a file and you
@@ -43,10 +67,12 @@ browser should help you *act* on a page, not just read it.
 
 **Actuent**
 
-- **Start page.** New tabs open an Act page: results from Actuent appear as
-  you type, <kbd>Shift</kbd>+<kbd>Enter</kbd> searches the web with your
-  default engine. It also shows your top sites and the weather from
-  [Rejn](https://rejn.app) (instead of Firefox's AccuWeather widget).
+- **Start page.** New tabs open an Act page with one search box: your
+  search engine, with Actuent's live results (places, prices, events) right
+  in its suggestions. Below it, sites you've saved and the ones you visit
+  most, and the weather from [Rejn](https://rejn.app) in the corner
+  (instead of Firefox's AccuWeather widget). Closing the last tab leaves you
+  on this page instead of closing the window.
 - **Address bar suggestions.** Type `coffee near nørreport` or
   `notion pricing` and matching places and sites show up next to your
   history.
@@ -152,8 +178,10 @@ agents) are switched off by default.
 
 ## Getting it running
 
-You need Node 20 or newer, and macOS or Linux. Windows isn't wired up yet,
-help welcome.
+You need Node 20 or newer, on macOS, Linux or 64 bit Windows. For the
+installers: `pip install dmgbuild` on macOS (for the styled disk image),
+7-Zip and Inno Setup on Windows, `dpkg-deb` on Linux. The release workflow
+installs these itself.
 
 ```sh
 npm run dev
@@ -168,7 +196,8 @@ only need a browser restart.
 npm run dev -- --fresh      # start over with an empty profile
 npm run dev -- --rebuild    # after changing branding, extensions or the Firefox version
 npm run build               # dist/Act Browser.app (or dist/act-browser on Linux)
-npm run package             # .dmg / .tar.xz for releases
+npm run package             # the downloads for this platform, in dist/
+npm run smoke               # start the packaged build and check it works
 npm run lint                # make sure every JS file parses
 ```
 
@@ -196,8 +225,9 @@ git commit -am "Act Browser 0.4.0"
 git tag v0.4.0 && git push && git push --tags
 ```
 
-The workflow builds macOS and Linux, signs the update archives and publishes
-the release. `npm run package` does the same locally.
+The workflow builds macOS, Windows and Linux, starts each build to check it,
+signs the update archives and publishes the release with all the downloads.
+Pull requests get the same builds and checks, without the release.
 
 ## How it works
 

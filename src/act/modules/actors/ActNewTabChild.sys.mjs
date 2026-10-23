@@ -7,7 +7,16 @@
 // for the few things it needs from the browser. The actor is only
 // registered for the new tab page's own URL.
 
-const METHODS = ["state", "search", "topSites", "webSearchUrl", "openInBackground"];
+const METHODS = [
+  "state",
+  "search",
+  "topSites",
+  "webSearchUrl",
+  "openInBackground",
+  "savedSites",
+  "saveSite",
+  "removeSite",
+];
 
 export class ActNewTabChild extends JSWindowActorChild {
   handleEvent(event) {

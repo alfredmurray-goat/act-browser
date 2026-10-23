@@ -309,31 +309,98 @@ function onKeyDown(e) {
   }
 }
 
-// --- Top sites ----------------------------------------------------------------------
+// --- Saved and frequent sites ---------------------------------------------------
 
-async function loadTopSites() {
-  let sites = (await api.topSites().catch(() => null)) || [];
-  let tiles = sites.map(site => {
-    let link = el("a");
-    link.href = site.url;
-    link.title = site.title || site.url;
-    let tile = el("div", "tile");
-    let host = "";
-    try {
-      host = new URL(site.url).hostname.replace(/^www\./, "");
-    } catch {}
-    if (site.icon?.startsWith("data:")) {
-      let icon = el("img");
-      icon.src = site.icon;
-      icon.alt = "";
-      tile.append(icon);
-    } else {
-      tile.append(el("span", "letter", (host[0] || "?").toUpperCase()));
-    }
-    link.append(tile, el("span", "name", site.title || host));
-    return link;
+function hostOf(url) {
+  try {
+    return new URL(url).hostname.replace(/^www\./, "");
+  } catch {
+    return "";
+  }
+}
+
+// One tile. `action` is the small button in its corner: remove for saved
+// sites, save for frequent ones.
+function siteTile(site, action) {
+  let link = el("a", "site");
+  link.href = site.url;
+  link.title = site.title || site.url;
+  let tile = el("div", "tile");
+  let host = hostOf(site.url);
+  if (site.icon?.startsWith("data:")) {
+    let icon = el("img");
+    icon.src = site.icon;
+    icon.alt = "";
+    tile.append(icon);
+  } else {
+    tile.append(el("span", "letter", (host[0] || "?").toUpperCase()));
+  }
+  link.append(tile, el("span", "name", site.title || host));
+
+  if (action) {
+    let button = el("button", `tile-action ${action.kind}`, action.kind == "remove" ? "×" : "+");
+    button.type = "button";
+    button.title = action.label;
+    button.setAttribute("aria-label", action.label);
+    button.addEventListener("click", e => {
+      e.preventDefault();
+      e.stopPropagation();
+      action.run();
+    });
+    link.append(button);
+  }
+  return link;
+}
+
+let savedSites = [];
+
+async function renderSites(saved) {
+  savedSites = saved || (await api.savedSites().catch(() => [])) || [];
+  let savedUrls = new Set(savedSites.map(s => s.url));
+
+  let tiles = savedSites.map(site =>
+    siteTile(site, {
+      kind: "remove",
+      label: `Remove ${site.title || hostOf(site.url)}`,
+      run: async () => renderSites(await api.removeSite(site.url)),
+    })
+  );
+  let add = el("button", "site add-site");
+  add.type = "button";
+  let plus = el("div", "tile");
+  plus.append(el("span", "letter", "+"));
+  add.append(plus, el("span", "name", "Add site"));
+  add.addEventListener("click", () => {
+    $("add-site").hidden = false;
+    $("add-site-url").focus();
   });
-  $("top-sites").replaceChildren(...tiles);
+  $("saved-sites").replaceChildren(...tiles, add);
+
+  let frequent = ((await api.topSites().catch(() => null)) || [])
+    .filter(site => !savedUrls.has(site.url))
+    .slice(0, 8);
+  $("top-sites").replaceChildren(
+    ...frequent.map(site =>
+      siteTile(site, {
+        kind: "save",
+        label: `Save ${site.title || hostOf(site.url)}`,
+        run: async () => renderSites(await api.saveSite(site.url, site.title || "")),
+      })
+    )
+  );
+  $("top-sites-heading").hidden = !frequent.length;
+}
+
+async function addSite(e) {
+  e.preventDefault();
+  let url = $("add-site-url").value.trim();
+  if (!url) {
+    return;
+  }
+  let saved = await api.saveSite(url, $("add-site-name").value);
+  $("add-site").reset();
+  $("add-site").hidden = true;
+  renderSites(saved);
 }
 
 // --- Weather (Rejn) -----------------------------------------------------------------
@@ -397,10 +464,9 @@ function setupWeather() {
     theme: weatherTheme(),
     lang: weatherLang(),
     units,
-    // Under 230px tall Rejn switches to its one-row layout, which fits the
-    // corner (it needs at least 280px of width).
-    width: 300,
-    height: 150,
+    // Rejn's own one-row size. Smaller clips the card.
+    width: 340,
+    height: 170,
     onWeather: data => showWeatherLine(data, units),
   };
   if (weather) {
@@ -444,8 +510,14 @@ if (api) {
     weather?.update({ theme: weatherTheme() })
   );
 
+  $("add-site").addEventListener("submit", addSite);
+  $("add-site-cancel").addEventListener("click", () => {
+    $("add-site").reset();
+    $("add-site").hidden = true;
+  });
+
   loadState();
-  loadTopSites();
+  renderSites();
   // No autofocus here: a new tab focuses the address bar, and grabbing focus
   // back mid-typing is what made keystrokes jump between the two boxes.
 }

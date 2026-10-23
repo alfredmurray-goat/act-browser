@@ -22,14 +22,21 @@ export const platform = (() => {
   if (process.platform == "linux") {
     return process.arch == "arm64" ? "linux-aarch64" : "linux-x86_64";
   }
+  if (process.platform == "win32" && process.arch == "x64") {
+    return "win64";
+  }
   return null;
 })();
+
+export const isMac = platform == "mac";
+export const isWindows = platform == "win64";
+export const isLinux = !!platform?.startsWith("linux");
 
 export function requirePlatform() {
   if (!platform) {
     fail(
-      `Building on ${process.platform} isn't supported yet (macOS and Linux are). ` +
-        "Pull requests for Windows are very welcome."
+      `Building on ${process.platform}/${process.arch} isn't supported ` +
+        "(macOS, Linux and 64 bit Windows are)."
     );
   }
 }
@@ -85,23 +92,48 @@ export const firefox = {
   get downloadUrl() {
     let { version, locale } = config.firefox;
     let base = `https://download-installer.cdn.mozilla.net/pub/firefox/releases/${version}`;
-    if (platform == "mac") {
+    if (isMac) {
       return `${base}/mac/${locale}/Firefox%20${version}.dmg`;
+    }
+    if (isWindows) {
+      // Only the installer is published, a self extracting 7-Zip archive.
+      return `${base}/win64/${locale}/Firefox%20Setup%20${version}.exe`;
     }
     return `${base}/${platform}/${locale}/firefox-${version}.tar.xz`;
   },
 
   get archive() {
-    let ext = platform == "mac" ? "dmg" : "tar.xz";
+    let ext = isMac ? "dmg" : isWindows ? "exe" : "tar.xz";
     return path.join(CACHE, `firefox-${this.version}-${platform}.${ext}`);
   },
 
   // Where the untouched, extracted Firefox lives.
   get extracted() {
     let dir = path.join(CACHE, `firefox-${this.version}-${platform}`);
-    return path.join(dir, platform == "mac" ? "Firefox.app" : "firefox");
+    return path.join(dir, isMac ? "Firefox.app" : isWindows ? "core" : "firefox");
   },
 };
+
+// zip and unzip, with 7-Zip on Windows where those don't exist.
+export function unzipTo(archive, dir) {
+  fs.mkdirSync(dir, { recursive: true });
+  if (isWindows) {
+    run("7z", ["x", "-y", `-o${dir}`, archive], { quiet: true });
+  } else {
+    // omni.ja has a slightly unusual header, unzip warns about it (exit 1/2).
+    run("unzip", ["-q", "-o", archive, "-d", dir], { okCodes: [0, 1, 2], quiet: true });
+  }
+}
+
+// Zips the *contents* of dir (not dir itself) into archive.
+export function zipContents(dir, archive) {
+  rm(archive);
+  if (isWindows) {
+    run("7z", ["a", "-tzip", "-mx=9", archive, "."], { cwd: dir, quiet: true });
+  } else {
+    run("zip", ["-q", "-r", "-9", "-X", "-D", archive, "."], { cwd: dir });
+  }
+}
 
 /**
  * Layout of a built Act Browser for the current platform.
@@ -116,5 +148,9 @@ export function appLayout(outDir = DIST) {
     };
   }
   let app = path.join(outDir, "act-browser");
-  return { app, resources: app, binary: path.join(app, "firefox") };
+  return {
+    app,
+    resources: app,
+    binary: path.join(app, isWindows ? "firefox.exe" : "firefox"),
+  };
 }

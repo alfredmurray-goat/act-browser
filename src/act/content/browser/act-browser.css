@@ -147,7 +147,9 @@
 }
 
 #act-workspace-title {
-  margin: 0 18px 6px !important;
+  flex: 1;
+  min-width: 0;
+  margin: 0 !important;
   font-weight: 600;
   font-size: 1.05em;
   opacity: 0.85;
@@ -157,7 +159,10 @@
   }
 }
 
-:root:is([act-sidebar-toolbar], [inDOMFullscreen], [customizing]) #act-sidebar-header,
+/* With the address bar in the sidebar, the toolbar takes the window
+   buttons' row. */
+:root[act-sidebar-toolbar] #act-sidebar-titlebar,
+:root:is([inDOMFullscreen], [customizing]) #act-sidebar-header,
 :root:not([act-vertical]) #act-sidebar-header {
   display: none;
 }
@@ -195,15 +200,44 @@
 
 /* --- Workspaces ------------------------------------------------------------ */
 
-/* One row under the tabs: workspaces left, downloads and extensions right. */
+/* Bottom of the sidebar, a mirrored L: tools along the bottom, extension
+   icons stacked up the right hand side from its end. */
 #act-sidebar-footer {
+  gap: 2px;
+  padding: 4px 8px 8px;
+}
+
+#act-sidebar-tools {
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin: 0;
+  min-height: 0;
+}
+
+:is(.act-sidebar-tool, #act-sidebar-tools .toolbarbutton-1) {
+  margin: 0 !important;
+  --toolbarbutton-outer-padding: 1px;
+  --toolbarbutton-inner-padding: 7px;
+  opacity: 0.75;
+  -moz-context-properties: fill, fill-opacity;
+  fill: currentColor;
+
+  &:hover,
+  &[open],
+  &[checked] {
+    opacity: 1;
+  }
+}
+
+/* Workspace icons sit next to the workspace name at the top. */
+#act-sidebar-titlerow {
+  padding-inline: 18px 10px;
+  margin-bottom: 6px;
   gap: 4px;
-  padding: 6px 8px 8px;
-  min-height: 44px;
 }
 
 #act-workspaces {
-  flex: 1;
   gap: 2px;
   min-width: 0;
   overflow-x: auto;
@@ -597,15 +631,16 @@
 /* --- Extensions in the sidebar ------------------------------------------- */
 
 #act-extensions-bar {
-  flex: none;
-  gap: 0;
+  flex-direction: column-reverse;
+  align-items: center;
+  align-self: flex-end;
+  gap: 2px;
   padding: 0;
+  margin-inline-end: 8px !important;
   margin: 0;
   background: transparent;
   border: none;
   min-height: 0;
-  max-width: 60%;
-  overflow: hidden;
 
   &:empty,
   &:not(:has(toolbarbutton, toolbaritem)) {
@@ -615,12 +650,17 @@
   .toolbarbutton-1 {
     margin: 0 !important;
     --toolbarbutton-outer-padding: 1px;
-    --toolbarbutton-inner-padding: 6px;
-    opacity: 0.75;
+    --toolbarbutton-inner-padding: 7px;
+    opacity: 0.8;
 
     &:hover,
     &[open] {
       opacity: 1;
     }
+  }
+
+  /* Icons only. */
+  .toolbarbutton-text {
+    display: none !important;
   }
 }

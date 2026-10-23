@@ -137,6 +137,19 @@ function isMac() {
   return Services.appinfo.OS == "Darwin";
 }
 
+function isWindows() {
+  return Services.appinfo.OS == "WINNT";
+}
+
+// A program in Windows' System32 folder.
+function system32(...parts) {
+  let file = Services.dirsvc.get("SysD", Ci.nsIFile);
+  for (let part of parts) {
+    file.append(part);
+  }
+  return file.path;
+}
+
 // The .app bundle (macOS) or install folder (Linux) we're running from.
 function installDir() {
   let exe = Services.dirsvc.get("XREExeF", Ci.nsIFile);
@@ -283,7 +296,7 @@ export const ActUpdater = {
         return;
       }
 
-      let ext = platform == "mac" ? "zip" : "tar.xz";
+      let ext = platform.startsWith("linux") ? "tar.xz" : "zip";
       let name = `Act-Browser-${version}-${platform}.${ext}`;
       let asset = release.assets?.find(a => a.name == name);
       let sigAsset = release.assets?.find(a => a.name == `${name}.sig`);
@@ -345,13 +358,16 @@ export const ActUpdater = {
       await run("/usr/bin/xattr", ["-dr", "com.apple.quarantine", staging.path]).catch(
         () => {}
       );
+    } else if (isWindows()) {
+      // Windows 10 and later come with bsdtar, which reads zips.
+      await run(system32("tar.exe"), ["-xf", archive.path, "-C", staging.path]);
     } else {
       await run("/usr/bin/env", ["tar", "-xJf", archive.path, "-C", staging.path]);
     }
     archive.remove(false);
 
-    // The .app (macOS) or act-browser folder (Linux) inside the archive,
-    // whatever the user named their copy.
+    // The .app (macOS) or act-browser folder (Linux, Windows) inside the
+    // archive, whatever the user named their copy.
     let app = [...staging.directoryEntries].find(entry =>
       platform == "mac" ? entry.leafName.endsWith(".app") : entry.leafName == "act-browser"
     );
@@ -394,10 +410,14 @@ export const ActUpdater = {
     }
   },
 
-  // Starts a little shell script that outlives us: it waits for this
-  // process to exit, swaps the app and optionally starts it again. If the
-  // swap fails the old app is put back.
+  // Starts a little script that outlives us: it waits for this process to
+  // exit, swaps the app and optionally starts it again. If the swap fails
+  // the old app is put back.
   _launchInstaller(relaunch) {
+    if (isWindows()) {
+      this._launchWindowsInstaller(relaunch);
+      return;
+    }
     let target = installDir();
     let script = updatesDir();
     script.append("install.sh");
@@ -431,6 +451,52 @@ export const ActUpdater = {
     process.init(sh);
     // nohup + & so the script survives us exiting.
     let args = ["-c", `nohup /bin/sh ${quote(script.path)} >/dev/null 2>&1 &`];
+    process.run(false, args, args.length);
+  },
+
+  // The same with PowerShell. Also carries the uninstaller (unins000.*,
+  // from the Setup.exe install) over to the new folder, so "Uninstall"
+  // keeps working after updates.
+  _launchWindowsInstaller(relaunch) {
+    let target = installDir();
+    let script = updatesDir();
+    script.append("install.ps1");
+    let quote = s => `'${String(s).replace(/'/g, "''")}'`;
+    let body = [
+      `$target = ${quote(target.path)}`,
+      `$staged = ${quote(this.staged.path)}`,
+      `$updates = ${quote(updatesDir().path)}`,
+      `Wait-Process -Id ${Services.appinfo.processID} -ErrorAction SilentlyContinue`,
+      "Start-Sleep -Milliseconds 500",
+      '$backup = "$target.old"',
+      "Remove-Item -Recurse -Force $backup -ErrorAction SilentlyContinue",
+      'Copy-Item (Join-Path $target "unins*") $staged -ErrorAction SilentlyContinue',
+      "try {",
+      "  Move-Item $target $backup -ErrorAction Stop",
+      "  Move-Item $staged $target -ErrorAction Stop",
+      "  Remove-Item -Recurse -Force $backup, $updates -ErrorAction SilentlyContinue",
+      "} catch {",
+      "  if (!(Test-Path $target) -and (Test-Path $backup)) { Move-Item $backup $target }",
+      "}",
+      relaunch ? 'Start-Process (Join-Path $target "firefox.exe")' : "",
+      "",
+    ].join("\r\n");
+    writeTextFile(script, body);
+
+    let powershell = Cc["@mozilla.org/file/local;1"].createInstance(Ci.nsIFile);
+    powershell.initWithPath(system32("WindowsPowerShell", "v1.0", "powershell.exe"));
+    let process = Cc["@mozilla.org/process/util;1"].createInstance(Ci.nsIProcess);
+    process.init(powershell);
+    process.startHidden = true;
+    let args = [
+      "-NoProfile",
+      "-ExecutionPolicy",
+      "Bypass",
+      "-WindowStyle",
+      "Hidden",
+      "-File",
+      script.path,
+    ];
     process.run(false, args, args.length);
   },
 

@@ -318,8 +318,8 @@ var ActWorkspaces = {
       }
     });
 
-    // Left side of the footer under the tab list (see act-layout.js).
-    document.getElementById("act-sidebar-footer").prepend(this.strip);
+    // Next to the workspace name at the top of the sidebar (act-layout.js).
+    document.getElementById("act-sidebar-titlerow").append(this.strip);
   },
 
   _renderStrip() {

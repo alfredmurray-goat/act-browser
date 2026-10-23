@@ -40,7 +40,15 @@
     </form>
 
     <div id="below">
-      <nav id="top-sites" aria-label="Top sites"></nav>
+      <nav id="saved-sites" class="site-grid" aria-label="Saved sites"></nav>
+      <form id="add-site" hidden>
+        <input id="add-site-url" type="text" placeholder="Address, e.g. github.com" autocomplete="off" spellcheck="false" required>
+        <input id="add-site-name" type="text" placeholder="Name (optional)" autocomplete="off">
+        <button type="submit">Save</button>
+        <button type="button" id="add-site-cancel">Cancel</button>
+      </form>
+      <h2 id="top-sites-heading" hidden>Frequently visited</h2>
+      <nav id="top-sites" class="site-grid" aria-label="Frequently visited"></nav>
     </div>
   </main>
 </body>
