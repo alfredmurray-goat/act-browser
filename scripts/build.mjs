@@ -101,6 +101,27 @@ function writeBuildInfo(resources) {
   );
 }
 
+/**
+ * On macOS Firefox hands passkeys to the system, which only answers apps
+ * signed with Apple's passkey entitlement
+ * (com.apple.developer.web-browser.public-key-credential). An ad hoc
+ * signature can't carry it, and without it requests hang with no prompt.
+ * Firefox's own handler works without it: security keys, plus anything a
+ * password manager extension provides. iCloud Keychain and phone passkeys
+ * need a build signed with an Apple Developer ID that has the entitlement.
+ */
+function usePasskeysWithoutApple(resources) {
+  fs.writeFileSync(
+    path.join(resources, "browser", "defaults", "preferences", "act-macos.js"),
+    [
+      "// Written by scripts/build.mjs for ad hoc signed builds, see",
+      "// usePasskeysWithoutApple() there.",
+      'pref("security.webauthn.enable_macos_passkeys", false);',
+      "",
+    ].join("\n")
+  );
+}
+
 function installActFiles(resources) {
   for (let [from, to] of INSTALL) {
     let target = path.join(resources, to);
@@ -313,6 +334,7 @@ export async function build({ outDir = DIST } = {}) {
 
   if (isMac) {
     rebrandMac(layout);
+    usePasskeysWithoutApple(layout.resources);
     log("Signing (ad hoc)…");
     run("xattr", ["-cr", layout.app]);
     run("codesign", ["--force", "--deep", "--sign", "-", layout.app], { quiet: true });
