@@ -55,6 +55,8 @@ var ActWorkspaces = {
     on(container, "TabOpen", e => this._onTabOpen(e.target));
     on(container, "TabSelect", e => this._onTabSelect(e.target));
     on(container, "SSTabRestoring", e => this._onTabRestoring(e.target));
+    on(window, "TabGrouped", () => this._scheduleApply());
+    on(window, "TabUngrouped", () => this._scheduleApply());
     on(window, "SSWindowRestored", () => this._restoreActive());
 
     this._restoreActive();
@@ -213,6 +215,12 @@ var ActWorkspaces = {
         }
       }
     }
+    // A group shows in the workspace its tabs are in. Its label isn't a
+    // tab, so hiding the tabs alone would leave it behind.
+    for (let group of gBrowser.tabGroups) {
+      let here = !enabled || group.tabs.some(t => this.workspaceOf(t) == this.active);
+      group.toggleAttribute("act-ws-hidden", !here);
+    }
   },
 
   // --- Managing workspaces -------------------------------------------------
@@ -291,6 +299,12 @@ var ActWorkspaces = {
   moveTab(tab, id) {
     if (tab.pinned) {
       return;
+    }
+    // Groups live in one workspace. Moving a whole group keeps it together,
+    // a tab moved on its own leaves its group.
+    let group = tab.group;
+    if (group && !group.tabs.every(t => t.multiselected || t == tab)) {
+      gBrowser.ungroupTab(tab);
     }
     this._setTabWorkspace(tab, id);
     if (tab.selected && id != this.active) {

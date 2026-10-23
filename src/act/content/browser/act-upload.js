@@ -27,21 +27,34 @@ var ActUploadMenu = {
     let body = el("div", { id: "act-upload-body" });
     let title = el("div", { className: "act-upload-title", textContent: "Upload" });
 
-    let clip = el("button", { id: "act-upload-clipboard" });
+    let row = (id, icon, heading, detail) => {
+      let button = el("button", { id, className: "act-upload-option" });
+      let text = el("span", { className: "act-upload-text" });
+      text.append(el("strong", { textContent: heading }));
+      if (detail) {
+        text.append(el("small", detail));
+      }
+      button.append(icon, text);
+      return button;
+    };
+
     let thumb = el("img", { id: "act-upload-thumb", alt: "" });
-    let label = el("span");
-    label.append(
-      el("strong", { textContent: "Image from clipboard" }),
-      el("small", { id: "act-upload-size" })
-    );
-    clip.append(thumb, label);
+    let clip = row("act-upload-clipboard", thumb, "Image from clipboard", {
+      id: "act-upload-size",
+    });
     clip.addEventListener("click", () => this._done("clipboard"));
 
-    let pick = el("button", {
-      id: "act-upload-pick",
-      textContent: "Choose a file…",
-    });
+    let folder = el("span", { className: "act-upload-icon" });
+    let pick = row("act-upload-pick", folder, "Choose a file…");
     pick.addEventListener("click", () => this._done("pick"));
+
+    // Up and down move between the two, like a menu.
+    body.addEventListener("keydown", e => {
+      if (e.key == "ArrowDown" || e.key == "ArrowUp") {
+        e.preventDefault();
+        (document.activeElement == clip ? pick : clip).focus();
+      }
+    });
 
     body.append(title, clip, pick);
     this.panel.append(body);
@@ -79,8 +92,9 @@ var ActUploadMenu = {
     this._thumbUrl = URL.createObjectURL(blob);
     document.getElementById("act-upload-thumb").src = this._thumbUrl;
     let kb = Math.max(1, Math.round(image.bytes.length / 1024));
-    document.getElementById("act-upload-size").textContent =
-      kb > 1024 ? `${(kb / 1024).toFixed(1)} MB` : `${kb} KB`;
+    let size = kb > 1024 ? `${(kb / 1024).toFixed(1)} MB` : `${kb} KB`;
+    let kind = image.type.split("/")[1].toUpperCase().replace("JPEG", "JPG");
+    document.getElementById("act-upload-size").textContent = `${kind} · ${size}`;
 
     return new Promise(resolve => {
       this._resolve = resolve;

@@ -28,6 +28,7 @@ const WINDOW_SCRIPTS = [
   "chrome://act/content/browser/act-browser.js",
   "chrome://act/content/browser/act-layout.js",
   "chrome://act/content/browser/act-workspaces.js",
+  "chrome://act/content/browser/act-tabgroups.js",
   "chrome://act/content/browser/act-extensions.js",
   "chrome://act/content/browser/act-popup.js",
   "chrome://act/content/browser/act-site-actions.js",

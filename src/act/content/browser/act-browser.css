@@ -135,6 +135,97 @@
   }
 }
 
+/* Tab groups as folders: a row like a tab with the group's colour as a dot
+   and an arrow that turns when it's collapsed, instead of Firefox's
+   coloured pill. The line down the side stays, it shows what's inside. */
+#vertical-tabs tab-group[act-ws-hidden] {
+  display: none !important;
+}
+
+#tabbrowser-tabs[orient="vertical"][expanded] {
+  .tab-group-label-container {
+    margin-block-start: 2px !important;
+    padding-block-end: 0 !important;
+    margin-inline: 8px !important;
+  }
+
+  .tab-group-label-container::after {
+    inset-inline-start: 4px !important;
+    inset-block: 6px 0 !important;
+  }
+
+  .tab-group-label-hover-highlight {
+    align-items: stretch;
+    box-shadow: none !important;
+    background: none !important;
+  }
+
+  .tab-group-label {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    height: 32px !important;
+    width: auto !important;
+    max-width: none !important;
+    align-self: stretch !important;
+    margin: 0 !important;
+    padding-inline: 10px !important;
+    border-radius: 9px !important;
+    outline: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    color: inherit !important;
+    font-size: 0.95em;
+    font-weight: 600;
+    text-align: start;
+    line-height: 32px !important;
+
+    &::before {
+      content: "";
+      flex: none;
+      width: 10px;
+      height: 10px;
+      border-radius: 3px;
+      background-color: var(--tab-group-color);
+    }
+
+    &::after {
+      content: "";
+      flex: none;
+      width: 12px;
+      height: 12px;
+      background: url("chrome://global/skin/icons/arrow-down.svg") center / 12px no-repeat;
+      -moz-context-properties: fill;
+      fill: currentColor;
+      opacity: 0.55;
+      transition: transform 120ms;
+    }
+
+    &:hover {
+      background-color: color-mix(in srgb, currentColor 8%, transparent) !important;
+    }
+
+    &[dragover-groupTarget] {
+      background-color: color-mix(in srgb, var(--tab-group-color) 25%, transparent) !important;
+    }
+  }
+
+  tab-group[collapsed] .tab-group-label::after {
+    transform: rotate(-90deg);
+  }
+
+  /* Tabs inside a group sit a little further in. */
+  tab-group:not([collapsed]) > .tabbrowser-tab .tab-background,
+  tab-group[collapsed] > .tabbrowser-tab[selected] .tab-background {
+    margin-inline-start: 16px !important;
+  }
+
+  .tab-group-line {
+    inset-inline-start: 12px !important;
+    opacity: 0.6;
+  }
+}
+
 /* Title row at the top of the sidebar: room for the window buttons, and the
    workspace name underneath, like Zen's "Space" heading. */
 #act-sidebar-header {
@@ -664,3 +755,99 @@
     display: none !important;
   }
 }
+
+/* Upload from clipboard (act-upload.js): a small menu, the clipboard image
+   as a thumbnail on top and the usual file picker underneath. */
+#act-upload-panel {
+  --panel-padding: 6px;
+  --panel-border-radius: 12px;
+}
+
+#act-upload-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 280px;
+}
+
+.act-upload-title {
+  padding: 4px 8px 6px;
+  font-size: 0.85em;
+  font-weight: 600;
+  opacity: 0.6;
+}
+
+.act-upload-option {
+  appearance: none;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 40px;
+  margin: 0;
+  padding: 6px 8px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+
+  &:hover,
+  &:focus-visible {
+    background-color: color-mix(in srgb, currentColor 9%, transparent);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--focus-outline-color, AccentColor);
+    outline-offset: -2px;
+  }
+
+  &:active {
+    background-color: color-mix(in srgb, currentColor 15%, transparent);
+  }
+}
+
+#act-upload-thumb,
+.act-upload-icon {
+  flex: none;
+  width: 48px;
+  height: 48px;
+  border-radius: 6px;
+}
+
+#act-upload-thumb {
+  object-fit: cover;
+  background-color: color-mix(in srgb, currentColor 8%, transparent);
+  outline: 1px solid color-mix(in srgb, currentColor 14%, transparent);
+  outline-offset: -1px;
+}
+
+.act-upload-icon {
+  height: 28px;
+  background: url("chrome://global/skin/icons/folder.svg") center / 16px no-repeat;
+  -moz-context-properties: fill;
+  fill: currentColor;
+  opacity: 0.8;
+}
+
+.act-upload-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+
+  strong {
+    font-weight: 600;
+  }
+
+  small {
+    font-size: 0.85em;
+    opacity: 0.65;
+  }
+}
+
+#act-upload-pick {
+  min-height: 34px;
+}
+
