@@ -3,6 +3,7 @@
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
+import zlib from "node:zlib";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 export const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -114,14 +115,55 @@ export const firefox = {
   },
 };
 
-// zip and unzip, with 7-Zip on Windows where those don't exist.
+/**
+ * Extracts a zip, omni.ja included. Firefox writes omni.ja with the central
+ * directory up front, which unzip only grumbles about but 7-Zip and Python
+ * refuse, so we read it ourselves: the directory gives absolute offsets to
+ * each entry, and every entry is either stored or deflated.
+ */
 export function unzipTo(archive, dir) {
-  fs.mkdirSync(dir, { recursive: true });
-  if (isWindows) {
-    run("7z", ["x", "-y", `-o${dir}`, archive], { quiet: true });
-  } else {
-    // omni.ja has a slightly unusual header, unzip warns about it (exit 1/2).
-    run("unzip", ["-q", "-o", archive, "-d", dir], { okCodes: [0, 1, 2], quiet: true });
+  let buf = fs.readFileSync(archive);
+  let eocd = buf.lastIndexOf(Buffer.from([0x50, 0x4b, 0x05, 0x06]));
+  if (eocd < 0) {
+    throw new Error(`${archive} isn't a zip file`);
+  }
+  let count = buf.readUInt16LE(eocd + 10);
+  let pos = buf.readUInt32LE(eocd + 16);
+  let root = path.resolve(dir);
+
+  for (let i = 0; i < count; i++) {
+    if (buf.readUInt32LE(pos) != 0x02014b50) {
+      throw new Error(`${archive}: bad central directory entry ${i}`);
+    }
+    let method = buf.readUInt16LE(pos + 10);
+    let size = buf.readUInt32LE(pos + 20);
+    let nameLength = buf.readUInt16LE(pos + 28);
+    let extraLength = buf.readUInt16LE(pos + 30);
+    let commentLength = buf.readUInt16LE(pos + 32);
+    let local = buf.readUInt32LE(pos + 42);
+    let name = buf.toString("utf8", pos + 46, pos + 46 + nameLength);
+    pos += 46 + nameLength + extraLength + commentLength;
+
+    let target = path.resolve(root, name);
+    if (!target.startsWith(root + path.sep)) {
+      throw new Error(`${archive}: ${name} points outside the archive`);
+    }
+    if (name.endsWith("/")) {
+      fs.mkdirSync(target, { recursive: true });
+      continue;
+    }
+    if (buf.readUInt32LE(local) != 0x04034b50) {
+      throw new Error(`${archive}: bad local header for ${name}`);
+    }
+    let start = local + 30 + buf.readUInt16LE(local + 26) + buf.readUInt16LE(local + 28);
+    let data = buf.subarray(start, start + size);
+    if (method == 8) {
+      data = zlib.inflateRawSync(data);
+    } else if (method != 0) {
+      throw new Error(`${archive}: ${name} uses compression method ${method}`);
+    }
+    fs.mkdirSync(path.dirname(target), { recursive: true });
+    fs.writeFileSync(target, data);
   }
 }
 
