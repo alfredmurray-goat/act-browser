@@ -20,8 +20,7 @@
    a card sitting on top of it. */
 #navigator-toolbox,
 #browser,
-#sidebar-container,
-#act-panel {
+#sidebar-container {
   background-color: var(--act-chrome-bg);
 }
 
@@ -52,10 +51,6 @@
     #tabbrowser-tabbox {
       padding-inline-start: var(--act-gap);
     }
-  }
-
-  &[act-panel-open] #tabbrowser-tabbox {
-    padding-inline-end: 0;
   }
 }
 
@@ -88,38 +83,6 @@
   box-shadow: var(--act-shadow);
 }
 
-/* --- Compact mode ----------------------------------------------------------- */
-
-/* The toolbar slides away and comes back when you move the mouse to the top
-   of the window or focus the address bar. */
-:root[act-compact]:not([customizing]) {
-  #navigator-toolbox {
-    --act-toolbar-peek: 6px;
-
-    position: relative;
-    z-index: 3;
-    min-height: var(--act-toolbar-peek);
-  }
-
-  #nav-bar {
-    margin-top: calc(-1 * var(--tab-min-height, 40px) - 8px);
-    opacity: 0;
-    transition: margin-top 160ms ease, opacity 120ms ease;
-  }
-
-  #navigator-toolbox:is(:hover, :focus-within),
-  #navigator-toolbox:has([open], [panelopen]) {
-    #nav-bar {
-      margin-top: 0;
-      opacity: 1;
-    }
-  }
-
-  #tabbrowser-tabbox {
-    padding-top: 0;
-  }
-}
-
 /* --- Act toolbar button ------------------------------------------------------- */
 
 #act-button {
@@ -131,36 +94,17 @@
   fill: var(--act-accent);
 }
 
-/* --- Act panel ------------------------------------------------------------- */
+/* --- Act popup ---------------------------------------------------------------- */
 
-/* SidebarController orders #browser's children with `order`, keep the panel
-   at the far end whatever side the tabs are on. */
-#act-panel-splitter {
-  order: 98;
+#act-popup {
+  --arrowpanel-padding: 0;
 }
 
-#act-panel {
-  order: 99;
-  min-width: 280px;
-  max-width: 50vw;
-  padding: 0 var(--act-gap) var(--act-gap) 0;
-}
-
-#act-panel-frame {
-  flex: 1;
+#act-popup-frame {
+  width: 400px;
+  height: 560px;
   border: none;
-  border-radius: var(--act-radius);
-  box-shadow: var(--act-shadow);
-  background-color: var(--tabpanel-background-color, Canvas);
-  color-scheme: inherit;
-}
-
-#act-panel-splitter {
-  width: var(--act-gap) !important;
-  min-width: var(--act-gap);
-  border: none !important;
-  background: transparent !important;
-  margin: 0 !important;
+  border-radius: var(--arrowpanel-border-radius, 8px);
 }
 
 /* --- Workspaces ------------------------------------------------------------ */
@@ -219,20 +163,6 @@
 #act-workspace-add {
   font-size: 16px;
   font-weight: 300;
-}
-
-/* The sidebar collapsed to icons (compact or expand-on-hover): only show the
-   active workspace, stacked. */
-#sidebar-main:not([expanded]) ~ #act-workspaces,
-#sidebar-container:has(sidebar-main:not([expanded])) #act-workspaces {
-  flex-direction: column;
-  padding-inline: 4px;
-
-  #act-workspace-name,
-  #act-workspace-add,
-  .act-workspace:not([selected]) {
-    display: none;
-  }
 }
 
 /* --- Site actions button & popup ------------------------------------------- */
@@ -365,7 +295,188 @@
 
 /* --- Feature switches ---------------------------------------------------- */
 
-:root:not([act-ai]) :is(#act-context-ask, #act-context-summarize),
 :root:not([act-actuent]) :is(#act-context-lookup, #act-site-button) {
   display: none;
+}
+
+/* --- Address bar in the sidebar ------------------------------------------- */
+
+/* The toolbox is lifted out of the page flow and laid over the top of the
+   tab sidebar, as wide as the sidebar. act-layout.js keeps
+   --act-sidebar-width and --act-toolbox-height up to date. */
+:root[act-sidebar-toolbar]:not([inDOMFullscreen], [customizing]) {
+  #navigator-toolbox {
+    position: absolute;
+    top: 0;
+    inset-inline-start: 0;
+    width: var(--act-sidebar-width, 260px);
+    z-index: 4;
+  }
+
+  #sidebar-container {
+    padding-top: var(--act-toolbox-height, 84px);
+  }
+
+  #tabbrowser-tabbox {
+    padding-top: var(--act-gap);
+  }
+
+  /* Buttons on the first row, the address bar on its own row below. The
+     address bar is taken out of the flow so the toolbar's overflow logic
+     only measures the buttons. */
+  #nav-bar {
+    --act-urlbar-row: calc(var(--urlbar-min-height, 32px) + 10px);
+
+    position: relative;
+    padding: 4px 6px var(--act-urlbar-row);
+    min-height: 0;
+  }
+
+  #urlbar-container {
+    position: absolute !important;
+    inset-inline: 8px;
+    bottom: 6px;
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Results get room to breathe: the dropdown (a popover anchored under
+     the input) spreads over the page instead of staying sidebar wide. */
+  #urlbar .urlbarView:popover-open {
+    position-area: block-end span-inline-end;
+    justify-self: start;
+    inset-inline: 0 auto;
+    width: min(680px, 100vw - 24px);
+  }
+
+  #nav-bar :is(.toolbarbutton-1, #PanelUI-menu-button) {
+    padding-inline: 1px !important;
+
+    > :is(.toolbarbutton-icon, .toolbarbutton-badge-stack) {
+      width: 28px !important;
+      height: 28px !important;
+      padding: 6px !important;
+    }
+  }
+
+  /* Spacers would only push buttons around in a narrow row. The sidebar
+     button has to stay in the toolbar (Firefox turns vertical tabs off
+     without it) but there's no room for it here. */
+  #nav-bar :is(toolbarspring, #sidebar-button) {
+    display: none;
+  }
+
+  /* Extension buttons are in the sidebar, the puzzle piece only takes room. */
+  &[act-extensions-in-sidebar] #unified-extensions-button {
+    display: none;
+  }
+}
+
+/* --- Compact mode ----------------------------------------------------------- */
+
+#act-hotzone {
+  display: none;
+}
+
+/* The sidebar (and the toolbar, when it sits in the sidebar) slides out of
+   view. Hover the window edge or focus the address bar to bring it back. */
+:root[act-compact]:not([customizing], [inDOMFullscreen]) {
+  #browser {
+    position: relative;
+  }
+
+  #act-hotzone {
+    display: block;
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    inset-inline-start: 0;
+    width: 10px;
+    z-index: 3;
+  }
+
+  #sidebar-container {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    inset-inline-start: 0;
+    z-index: 5;
+    border-start-end-radius: var(--act-radius);
+    border-end-end-radius: var(--act-radius);
+    box-shadow: 4px 0 24px -8px rgba(0, 0, 0, 0.35);
+    transform: translateX(calc(-100% - 16px));
+    transition: transform 180ms ease;
+  }
+
+  #tabbrowser-tabbox {
+    padding-inline-start: var(--act-gap);
+  }
+
+  &[act-sidebar-toolbar] #navigator-toolbox {
+    z-index: 6;
+    transform: translateX(calc(-100% - 16px));
+    transition: transform 180ms ease;
+  }
+
+  &:has(
+      #act-hotzone:hover,
+      #sidebar-container:is(:hover, :focus-within),
+      #navigator-toolbox:is(:hover, :focus-within),
+      #urlbar[open],
+      #act-popup[panelopen],
+      #act-workspace-menu[open],
+      #tabContextMenu[open]
+    ) {
+    #sidebar-container,
+    &[act-sidebar-toolbar] #navigator-toolbox {
+      transform: none;
+    }
+  }
+
+  /* With the toolbar across the top, it tucks away upwards instead. */
+  &:not([act-sidebar-toolbar]) {
+    #navigator-toolbox {
+      position: relative;
+      z-index: 6;
+      min-height: 6px;
+    }
+
+    #nav-bar {
+      margin-top: -48px;
+      opacity: 0;
+      transition: margin-top 160ms ease, opacity 120ms ease;
+    }
+
+    #navigator-toolbox:is(:hover, :focus-within) #nav-bar {
+      margin-top: 0;
+      opacity: 1;
+    }
+  }
+}
+
+/* --- Extensions in the sidebar ------------------------------------------- */
+
+#act-extensions-bar {
+  flex-wrap: wrap;
+  gap: 2px;
+  padding: 4px 6px 0;
+  background: transparent;
+  border: none;
+  min-height: 0;
+
+  &:empty,
+  &:not(:has(toolbarbutton, toolbaritem)) {
+    display: none;
+  }
+
+  :root:not([act-extensions-in-sidebar]) & {
+    display: none;
+  }
+
+  .toolbarbutton-1 {
+    margin: 0 !important;
+  }
 }

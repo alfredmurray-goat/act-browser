@@ -3,43 +3,35 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 export const PREF = {
-  aiEnabled: "act.ai.enabled",
-  aiEndpoint: "act.ai.endpoint",
-  aiModel: "act.ai.model",
-  aiTemperature: "act.ai.temperature",
-  aiPageContext: "act.ai.pageContext",
   actuentEnabled: "act.actuent.enabled",
   actuentEndpoint: "act.actuent.endpoint",
   actuentUrlbar: "act.actuent.urlbar",
   actuentUrlbarMax: "act.actuent.urlbar.maxResults",
   actuentSiteActions: "act.actuent.siteActions",
   compactMode: "act.compactMode",
-  panelWidth: "act.panel.width",
-  panelOpen: "act.panel.open",
+  sidebarToolbar: "act.layout.sidebarToolbar",
+  extensionsInSidebar: "act.extensions.inSidebar",
+  newtabEnabled: "act.newtab.enabled",
   workspacesEnabled: "act.workspaces.enabled",
   workspacesList: "act.workspaces.list",
 };
 
-// Live views of our prefs. Read them as ActPrefs.aiEnabled etc.
+// Live views of our prefs. Read them as ActPrefs.actuentEnabled etc.
 //
 // These read the pref every time instead of caching. Pref reads are cheap,
 // and a cache could still hold the old value inside a pref observer.
 export const ActPrefs = {};
 
 const defs = [
-  ["aiEnabled", true],
-  ["aiEndpoint", "https://api.groq.com/openai/v1"],
-  ["aiModel", "openai/gpt-oss-120b"],
-  ["aiTemperature", "0.4"],
-  ["aiPageContext", true],
   ["actuentEnabled", true],
   ["actuentEndpoint", "https://api.actuent.ai"],
   ["actuentUrlbar", true],
   ["actuentUrlbarMax", 3],
   ["actuentSiteActions", true],
   ["compactMode", false],
-  ["panelWidth", 380],
-  ["panelOpen", false],
+  ["sidebarToolbar", true],
+  ["extensionsInSidebar", true],
+  ["newtabEnabled", true],
   ["workspacesEnabled", true],
   ["workspacesList", "[]"],
 ];

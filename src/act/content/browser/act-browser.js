@@ -3,8 +3,8 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 // Loaded into every browser window by ActStartup. Ties the other act-*.js
-// scripts together and owns the window-wide bits: feature switches,
-// compact mode and keyboard shortcuts.
+// scripts together and owns the window-wide bits: feature switches and
+// keyboard shortcuts.
 
 "use strict";
 
@@ -30,18 +30,24 @@ var ActBrowser = {
     ActPrefsModule.setActPref(name, value);
   },
 
+  get actuentEnabled() {
+    return this.prefs.actuentEnabled;
+  },
+
   init() {
     let { PREF } = this;
     this._applyAttributes();
 
     this._unwatch = ActPrefsModule.watchPrefs(
       [
-        PREF.aiEnabled,
         PREF.actuentEnabled,
         PREF.actuentSiteActions,
         PREF.compactMode,
+        PREF.sidebarToolbar,
+        PREF.extensionsInSidebar,
         PREF.workspacesEnabled,
         PREF.workspacesList,
+        "sidebar.verticalTabs",
       ],
       pref => this._onPrefChanged(pref)
     );
@@ -50,7 +56,16 @@ var ActBrowser = {
     window.addEventListener("keydown", this._onKeyDown, true);
     window.addEventListener("unload", () => this.uninit(), { once: true });
 
-    for (let part of [ActPanel, ActWorkspaces, ActSiteActions, ActContextMenu]) {
+    // Order matters a little: the extensions bar goes above the workspace
+    // switcher, so workspaces come first.
+    for (let part of [
+      ActLayout,
+      ActWorkspaces,
+      ActExtensionsBar,
+      ActPopup,
+      ActSiteActions,
+      ActContextMenu,
+    ]) {
       try {
         part.init();
       } catch (e) {
@@ -64,32 +79,29 @@ var ActBrowser = {
     window.removeEventListener("keydown", this._onKeyDown, true);
     ActSiteActions.uninit();
     ActWorkspaces.uninit();
-  },
-
-  get aiEnabled() {
-    return this.prefs.aiEnabled;
-  },
-
-  get actuentEnabled() {
-    return this.prefs.actuentEnabled;
+    ActLayout.uninit();
   },
 
   _applyAttributes() {
     let root = document.documentElement;
+    let vertical = Services.prefs.getBoolPref("sidebar.verticalTabs", false);
     root.toggleAttribute("act-compact", this.prefs.compactMode);
-    root.toggleAttribute("act-ai", this.prefs.aiEnabled);
     root.toggleAttribute("act-actuent", this.prefs.actuentEnabled);
+    root.toggleAttribute(
+      "act-sidebar-toolbar",
+      vertical && this.prefs.sidebarToolbar
+    );
+    root.toggleAttribute(
+      "act-extensions-in-sidebar",
+      vertical && this.prefs.extensionsInSidebar
+    );
   },
 
   _onPrefChanged(pref) {
     let { PREF } = this;
     this._applyAttributes();
     switch (pref) {
-      case PREF.aiEnabled:
       case PREF.actuentEnabled:
-        ActPanel.update();
-        ActSiteActions.update();
-        break;
       case PREF.actuentSiteActions:
         ActSiteActions.update();
         break;
@@ -97,34 +109,19 @@ var ActBrowser = {
       case PREF.workspacesList:
         ActWorkspaces.update();
         break;
+      case PREF.sidebarToolbar:
+      case "sidebar.verticalTabs":
+        ActLayout.update();
+        break;
     }
+  },
+
+  setCompactMode(on) {
+    this.setPref(this.PREF.compactMode, on);
   },
 
   toggleCompactMode() {
     this.setCompactMode(!this.prefs.compactMode);
-  },
-
-  // Compact mode hides the toolbar until you hover the top of the window and
-  // collapses the tab sidebar to icons. For the sidebar we borrow Firefox's
-  // own expand-on-hover mode and put the user's choice back afterwards.
-  setCompactMode(on) {
-    const VIS = "sidebar.visibility";
-    const SAVED = "act.compactMode.savedVisibility";
-    if (on == this.prefs.compactMode) {
-      return;
-    }
-    if (on) {
-      let current = Services.prefs.getStringPref(VIS, "always-show");
-      if (current != "expand-on-hover") {
-        Services.prefs.setStringPref(SAVED, current);
-        Services.prefs.setStringPref(VIS, "expand-on-hover");
-      }
-    } else {
-      let saved = Services.prefs.getStringPref(SAVED, "always-show");
-      Services.prefs.setStringPref(VIS, saved);
-      Services.prefs.clearUserPref(SAVED);
-    }
-    this.setPref(this.PREF.compactMode, on);
   },
 
   _onKeyDown(event) {
@@ -135,11 +132,8 @@ var ActBrowser = {
     }
     let handled = true;
     switch (event.code) {
-      case "KeyA":
-        ActPanel.toggle();
-        break;
       case "KeyE":
-        ActPanel.open("explore");
+        ActPopup.toggle();
         break;
       case "KeyC":
         this.toggleCompactMode();
@@ -165,7 +159,7 @@ var ActBrowser = {
 
   /**
    * Opens an http(s) link from Act UI in a new tab. Anything else is ignored,
-   * since the links come from model output or search results.
+   * since the links come from search results.
    */
   openLink(url, { background = false } = {}) {
     let uri;

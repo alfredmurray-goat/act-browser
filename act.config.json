@@ -4,5 +4,12 @@
   "firefox": {
     "version": "158.0.1",
     "locale": "en-US"
-  }
+  },
+  "extensions": [
+    {
+      "id": "uBlock0@raymondhill.net",
+      "amo": "ublock-origin",
+      "name": "uBlock Origin"
+    }
+  ]
 }

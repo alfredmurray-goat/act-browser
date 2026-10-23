@@ -7,43 +7,22 @@
 "use strict";
 
 var ActContextMenu = {
-  items: {},
+  item: null,
 
   init() {
     let menu = document.getElementById("contentAreaContextMenu");
+    this.item = document.createXULElement("menuitem");
+    this.item.id = "act-context-lookup";
+    this.item.addEventListener("command", () => {
+      ActPopup.explore(this._selection());
+    });
+
     let anchor = document.getElementById("context-searchselect");
-
-    let separator = document.createXULElement("menuseparator");
-    separator.id = "act-context-separator";
-
-    let make = (id, onCommand) => {
-      let item = document.createXULElement("menuitem");
-      item.id = id;
-      item.addEventListener("command", onCommand);
-      return item;
-    };
-
-    this.items = {
-      separator,
-      ask: make("act-context-ask", () => {
-        ActPanel.ask(`Explain this:\n\n> ${this._selection()}`);
-      }),
-      lookup: make("act-context-lookup", () => {
-        ActPanel.explore(this._selection());
-      }),
-      summarize: make("act-context-summarize", () => {
-        ActPanel.ask("Summarize this page.");
-      }),
-    };
-    this.items.summarize.setAttribute("label", "Summarize Page with Act");
-
-    let { ask, lookup, summarize } = this.items;
     if (anchor) {
-      anchor.after(separator, ask, lookup);
+      anchor.after(this.item);
     } else {
-      menu.append(separator, ask, lookup);
+      menu.append(this.item);
     }
-    menu.append(summarize);
 
     menu.addEventListener("popupshowing", e => {
       if (e.target == menu) {
@@ -54,37 +33,16 @@ var ActContextMenu = {
 
   _selection() {
     let text = gContextMenu?.selectionInfo?.fullText || "";
-    return text.trim().slice(0, 2000);
-  },
-
-  _short(text) {
-    text = text.replace(/\s+/g, " ");
-    return text.length > 24 ? text.slice(0, 24) + "…" : text;
+    return text.trim().replace(/\s+/g, " ").slice(0, 200);
   },
 
   _onShowing() {
-    let { separator, ask, lookup, summarize } = this.items;
-    let hasSelection = !!gContextMenu?.isTextSelected;
-    let ai = ActBrowser.aiEnabled;
-    let actuent = ActBrowser.actuentEnabled;
-
-    if (hasSelection) {
-      let short = this._short(this._selection());
-      ask.setAttribute("label", `Ask Act about “${short}”`);
-      lookup.setAttribute("label", `Look up “${short}” on Actuent`);
+    let show = !!gContextMenu?.isTextSelected && ActBrowser.actuentEnabled;
+    this.item.hidden = !show;
+    if (show) {
+      let text = this._selection();
+      let short = text.length > 24 ? text.slice(0, 24) + "…" : text;
+      this.item.setAttribute("label", `Look up “${short}” on Actuent`);
     }
-    ask.hidden = !hasSelection || !ai;
-    lookup.hidden = !hasSelection || !actuent;
-    separator.hidden = ask.hidden && lookup.hidden;
-
-    // Only on plain web pages, when nothing in particular was clicked.
-    let onPage =
-      gContextMenu &&
-      !gContextMenu.onLink &&
-      !gContextMenu.onImage &&
-      !gContextMenu.onTextInput &&
-      !hasSelection &&
-      /^https?:/.test(gBrowser.currentURI.spec);
-    summarize.hidden = !ai || !onPage;
   },
 };

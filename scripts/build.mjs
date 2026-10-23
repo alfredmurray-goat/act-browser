@@ -10,6 +10,7 @@ import path from "node:path";
 import { fetchFirefox } from "./fetch.mjs";
 import {
   BRANDING,
+  CACHE,
   DIST,
   SRC,
   appLayout,
@@ -51,6 +52,28 @@ const BRAND_FILES = {
   "chrome/browser/content/branding/icon64.png": "icons/icon64.png",
   "chrome/browser/content/branding/icon128.png": "icons/icon128.png",
 };
+
+// Extensions we ship with, from addons.mozilla.org (so they're signed by
+// Mozilla). Firefox installs whatever is in distribution/extensions into
+// new profiles. Unlike a policy install, the user can still remove them.
+async function bundleExtensions(resources) {
+  let dir = path.join(resources, "distribution", "extensions");
+  fs.mkdirSync(dir, { recursive: true });
+  for (let ext of config.extensions || []) {
+    let cached = path.join(CACHE, "extensions", `${ext.id}.xpi`);
+    if (!fs.existsSync(cached)) {
+      log(`Downloading ${ext.name}…`);
+      let url = `https://addons.mozilla.org/firefox/downloads/latest/${ext.amo}/latest.xpi`;
+      let response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`Couldn't download ${ext.name}: ${response.status}`);
+      }
+      fs.mkdirSync(path.dirname(cached), { recursive: true });
+      fs.writeFileSync(cached, Buffer.from(await response.arrayBuffer()));
+    }
+    fs.copyFileSync(cached, path.join(dir, `${ext.id}.xpi`));
+  }
+}
 
 function installActFiles(resources) {
   for (let [from, to] of INSTALL) {
@@ -152,6 +175,7 @@ export async function build({ outDir = DIST } = {}) {
   }
 
   installActFiles(layout.resources);
+  await bundleExtensions(layout.resources);
   rebrandOmni(layout.resources);
 
   if (platform == "mac") {

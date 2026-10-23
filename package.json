@@ -2,7 +2,7 @@
   "name": "act-browser",
   "version": "0.1.0",
   "private": true,
-  "description": "A Firefox based browser with vertical tabs, workspaces, and an AI assistant wired into the live web through Actuent.",
+  "description": "A Firefox based browser with everything in the sidebar, workspaces, and the live web built in through Actuent.",
   "license": "MPL-2.0",
   "type": "module",
   "engines": {

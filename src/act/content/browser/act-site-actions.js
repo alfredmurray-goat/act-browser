@@ -185,29 +185,16 @@ var ActSiteActions = {
       if (action.description) {
         item.append(el("span", "act-site-action-desc", action.description));
       }
-      let canAsk = ActBrowser.aiEnabled;
-      if (!action.url && !canAsk) {
-        item.disabled = true;
-        item.title = "Turn on AI in Act settings to get help with this";
-      }
       item.addEventListener("click", () => this.runAction(action));
       list.append(item);
     }
     children.push(list);
 
     let footer = el("div", "act-site-footer");
-    if (ActBrowser.aiEnabled) {
-      let ask = el("button", "act-site-link", "Ask about this site");
-      ask.addEventListener("click", () => {
-        this.panel.hidePopup();
-        ActPanel.ask(`What can I do on ${site.name} (${site.domain})?`);
-      });
-      footer.append(ask);
-    }
-    let similar = el("button", "act-site-link", "Find similar");
+    let similar = el("button", "act-site-link", "Find similar sites");
     similar.addEventListener("click", () => {
       this.panel.hidePopup();
-      ActPanel.explore(`sites like ${site.domain}`);
+      ActPopup.explore(`sites like ${site.domain}`);
     });
     footer.append(similar);
     footer.append(el("span", "act-site-source", "via Actuent"));
@@ -217,19 +204,14 @@ var ActSiteActions = {
     this.panel.openPopup(this.button, "bottomright topright");
   },
 
+  // Actions with their own link go there. The rest (search, contact...)
+  // don't come with a url, so the site's home page is the best we can do.
   runAction(action) {
     let site = this.site;
     this.panel?.hidePopup();
-    if (action.url) {
-      ActBrowser.openLink(action.url);
-      return;
-    }
-    if (ActBrowser.aiEnabled && site) {
-      let what = action.description || action.name;
-      ActPanel.ask(
-        `I'm on ${site.name} (${site.domain}) and want to: ${what}. ` +
-          `How do I do that here? Point me to the right page.`
-      );
+    let url = action.url || site?.homeUrl;
+    if (url) {
+      ActBrowser.openLink(url);
     }
   },
 };

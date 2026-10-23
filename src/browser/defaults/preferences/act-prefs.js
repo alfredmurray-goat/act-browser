@@ -1,20 +1,11 @@
 // Act Browser defaults. Everything here can be changed in about:config,
-// most of it also from the Act panel settings.
+// most of it also from the Act popup settings.
 
 // --- Act features -----------------------------------------------------------
 
-// Master switches. Turning one off removes the UI and stops all network
-// requests for that feature.
-pref("act.ai.enabled", true);
+// Master switch. Turning it off removes the UI and stops all network
+// requests to Actuent.
 pref("act.actuent.enabled", true);
-
-// AI provider. Groq speaks the OpenAI chat completions API, so any
-// compatible endpoint (a local llama.cpp or Ollama server, etc.) works too.
-pref("act.ai.endpoint", "https://api.groq.com/openai/v1");
-pref("act.ai.model", "openai/gpt-oss-120b");
-pref("act.ai.temperature", "0.4");
-// Let the assistant read the page you're on when you ask about it.
-pref("act.ai.pageContext", true);
 
 // Actuent (https://actuent.ai) - live, structured info about the web.
 pref("act.actuent.endpoint", "https://api.actuent.ai");
@@ -25,8 +16,12 @@ pref("act.actuent.urlbar.maxResults", 3);
 pref("act.actuent.siteActions", true);
 
 pref("act.compactMode", false);
-pref("act.panel.width", 380);
-pref("act.panel.open", false);
+// Address bar and buttons on top of the tab sidebar, like Zen.
+pref("act.layout.sidebarToolbar", true);
+// Extension buttons in a row at the bottom of the tab sidebar.
+pref("act.extensions.inSidebar", true);
+// The Act start page for new tabs (and the home page).
+pref("act.newtab.enabled", true);
 
 pref("act.workspaces.enabled", true);
 pref("act.workspaces.list", "[{\"id\":\"home\",\"name\":\"Home\",\"icon\":\"🏠\"}]");
@@ -47,8 +42,16 @@ pref("browser.compactmode.show", true);
 pref("browser.aboutConfig.showWarning", false);
 pref("browser.shell.checkDefaultBrowser", false);
 
-// We ship our own assistant, so hide Firefox's chatbot sidebar by default.
+// No AI chatbot sidebar, link previews or agent features. (Local ML stays
+// on, Firefox's offline translations need it.)
 pref("browser.ml.chat.enabled", false);
+pref("browser.ml.chat.menu", false);
+pref("browser.ml.chat.shortcuts", false);
+pref("browser.ml.linkPreview.enabled", false);
+pref("browser.smartwindow.agent.enabled", false);
+pref("browser.smartwindow.agent.toolbar.enabled", false);
+pref("browser.smartwindow.smartformfill.enabled", false);
+pref("browser.tabs.groups.smart.enabled", false);
 
 // No sponsored stuff on the new tab page.
 pref("browser.newtabpage.activity-stream.showSponsored", false);

@@ -1,0 +1,30 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+// Puts this window's extension toolbar at the bottom of the tab sidebar.
+// The moving of buttons is done once for all windows in ActExtensions.
+
+"use strict";
+
+var ActExtensionsBar = {
+  toolbar: null,
+
+  init() {
+    let { ActExtensions } = ChromeUtils.importESModule(
+      "resource://act/ActExtensions.sys.mjs"
+    );
+    this.toolbar = ActExtensions.createToolbar(document);
+
+    let container = document.getElementById("sidebar-container");
+    let workspaces = document.getElementById("act-workspaces");
+    if (workspaces) {
+      workspaces.before(this.toolbar);
+    } else {
+      container.append(this.toolbar);
+    }
+
+    CustomizableUI.registerToolbarNode(this.toolbar);
+    ActExtensions.sync();
+  },
+};

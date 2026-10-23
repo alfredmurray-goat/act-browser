@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src chrome:; img-src chrome: https: data: page-icon: moz-icon:; style-src chrome: 'unsafe-inline'">
+  <title>Act</title>
+  <link rel="stylesheet" href="chrome://act/content/shared/act.css">
+  <link rel="stylesheet" href="chrome://act/content/popup/popup.css">
+  <script type="module" src="chrome://act/content/popup/popup.mjs"></script>
+</head>
+<body>
+  <header id="topbar">
+    <img class="logo" src="chrome://act/content/icons/act.svg" alt="">
+    <span id="heading">Explore</span>
+    <button class="icon-button" id="toggle-settings" title="Settings">
+      <img src="chrome://act/content/icons/settings.svg" alt="">
+    </button>
+  </header>
+
+  <section id="view-explore" class="view">
+    <form id="explore-form">
+      <input id="query" type="search" placeholder="Places, products, events, sites…" autocomplete="off">
+      <div class="row filters">
+        <input id="city" type="text" placeholder="City" autocomplete="off">
+        <label><input id="open-now" type="checkbox"> Open now</label>
+        <label><input id="news" type="checkbox"> News</label>
+      </div>
+    </form>
+    <div id="status" class="status"></div>
+    <div id="results"></div>
+    <footer class="attribution">Live results from <a href="https://actuent.ai">Actuent</a></footer>
+  </section>
+
+  <section id="view-off" class="view" hidden>
+    <p>Actuent is turned off, so there's nothing to search here.</p>
+    <button id="turn-on">Turn Actuent on</button>
+  </section>
+
+  <section id="view-settings" class="view" hidden>
+    <h2>Actuent</h2>
+    <label class="switch"><input type="checkbox" data-pref="act.actuent.enabled"><span>Actuent live web</span></label>
+    <label class="switch"><input type="checkbox" data-pref="act.actuent.urlbar"><span>Suggestions in the address bar</span></label>
+    <label class="switch"><input type="checkbox" data-pref="act.actuent.siteActions"><span>Site actions button</span></label>
+    <p class="hint">Site actions sends the domain you're on (not the full address) to Actuent. Never in private windows.</p>
+
+    <h2>Layout</h2>
+    <label class="switch"><input type="checkbox" data-pref="sidebar.verticalTabs"><span>Tabs on the left</span></label>
+    <label class="switch"><input type="checkbox" data-pref="act.layout.sidebarToolbar"><span>Address bar in the sidebar</span></label>
+    <label class="switch"><input type="checkbox" id="compact-toggle"><span>Compact mode <kbd>Ctrl+Alt+C</kbd></span></label>
+    <label class="switch"><input type="checkbox" data-pref="act.workspaces.enabled"><span>Workspaces</span></label>
+    <label class="switch"><input type="checkbox" data-pref="act.extensions.inSidebar"><span>Extensions in the sidebar</span></label>
+    <label class="switch"><input type="checkbox" data-pref="act.newtab.enabled"><span>Act new tab page</span></label>
+
+    <p class="hint about">Act Browser · <span id="version"></span></p>
+  </section>
+</body>
+</html>
