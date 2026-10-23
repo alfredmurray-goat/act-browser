@@ -11,5 +11,9 @@
       "amo": "ublock-origin",
       "name": "uBlock Origin"
     }
-  ]
+  ],
+  "updates": {
+    "repo": "alfredmurray-goat/act-browser",
+    "publicKey": "0v5exsw6f6JTnJmV/DA97Bq4BOAzuG7nwOyNihAvs+s="
+  }
 }

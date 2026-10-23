@@ -14,6 +14,10 @@ export const PREF = {
   newtabEnabled: "act.newtab.enabled",
   agentsEnabled: "act.agents.enabled",
   agentsPort: "act.agents.port",
+  framingAllowAll: "act.framing.allowAll",
+  updateEnabled: "act.update.enabled",
+  updateLastCheck: "act.update.lastCheck",
+  updateIntervalHours: "act.update.intervalHours",
   workspacesEnabled: "act.workspaces.enabled",
   workspacesList: "act.workspaces.list",
 };
@@ -36,6 +40,10 @@ const defs = [
   ["newtabEnabled", true],
   ["agentsEnabled", false],
   ["agentsPort", 9222],
+  ["framingAllowAll", true],
+  ["updateEnabled", true],
+  ["updateLastCheck", 0],
+  ["updateIntervalHours", 6],
   ["workspacesEnabled", true],
   ["workspacesList", "[]"],
 ];

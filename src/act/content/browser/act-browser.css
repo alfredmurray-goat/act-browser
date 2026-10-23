@@ -155,6 +155,13 @@
   list-style-image: url("chrome://act/content/icons/act.svg");
 }
 
+/* A dot on the Act button while an update waits for a restart. */
+:root[act-update-ready] #act-button {
+  > .toolbarbutton-icon {
+    background-image: radial-gradient(circle at 85% 15%, var(--act-accent) 3px, transparent 3.5px);
+  }
+}
+
 #act-button[checked] > .toolbarbutton-icon {
   background-color: var(--act-accent-soft) !important;
   fill: var(--act-accent);

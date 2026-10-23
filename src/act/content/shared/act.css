@@ -66,6 +66,17 @@ button {
   &:hover:not(:disabled) {
     border-color: color-mix(in srgb, var(--accent) 50%, var(--border));
   }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
+
+  &.primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: white;
+  }
 }
 
 input[type="text"],

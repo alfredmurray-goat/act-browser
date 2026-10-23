@@ -83,6 +83,22 @@ single file with no dependencies, it needs Node 22 or newer. It uses
 Firefox's built-in WebDriver BiDi on `localhost:9222`, nothing leaves your
 machine.
 
+**Updates**
+
+Act Browser updates itself from this repo's GitHub releases. A few hours
+apart it checks for a newer version, downloads it in the background, checks
+its signature and installs it when you quit (or right away with *Restart
+now*). The Act button gets a dot while an update is waiting. You can check
+by hand, or turn it off, in Act settings.
+
+**Embedding**
+
+Sites can't block being shown in another site's iframe: Act Browser ignores
+`X-Frame-Options` and CSP `frame-ancestors` for framed pages. Firefox keeps
+a framed site's cookies apart from the real one, so the framed copy isn't
+logged in as you. Switch it off in settings (*Let sites show any site in a
+frame*) for stock Firefox behaviour.
+
 ### Keyboard shortcuts
 
 | Shortcut | What it does |
@@ -110,6 +126,8 @@ Click the Act button, then the gear. Everything is also a normal pref in
 | `act.weather.useMyLocation` | `false` | Use the browser's location instead (Rejn asks for permission) |
 | `act.weather.units` | `metric` | Or `imperial` |
 | `act.agents.enabled` | `false` | Let AI agents control the browser |
+| `act.framing.allowAll` | `true` | Ignore sites' "don't embed me" rules |
+| `act.update.enabled` | `true` | Update automatically from GitHub releases |
 | `act.extensions.inSidebar` | `true` | Extension buttons in the sidebar |
 | `act.workspaces.enabled` | `true` | Workspaces |
 | `act.compactMode` | `false` | Compact mode |
@@ -154,6 +172,33 @@ npm run package             # .dmg / .tar.xz for releases
 npm run lint                # make sure every JS file parses
 ```
 
+## Releasing
+
+Releases are built by GitHub Actions (`.github/workflows/release.yml`) and
+every installed copy picks them up.
+
+One time only:
+
+```sh
+npm run keygen                                   # update signing key
+gh secret set ACT_UPDATE_KEY < ~/.config/act-browser/update-key.pem
+```
+
+`keygen` puts the private key in `~/.config/act-browser/` (never commit it,
+and don't lose it: builds out there only accept updates signed with it) and
+its public half in `act.config.json`.
+
+Each release:
+
+```sh
+npm version 0.4.0 --no-git-tag-version
+git commit -am "Act Browser 0.4.0"
+git tag v0.4.0 && git push && git push --tags
+```
+
+The workflow builds macOS and Linux, signs the update archives and publishes
+the release. `npm run package` does the same locally.
+
 ## How it works
 
 Act Browser isn't a source fork. Building Firefox from source takes hours and
@@ -166,7 +211,8 @@ lot of work. Instead, the build:
    privileges,
 3. replaces the branding inside `browser/omni.ja`, the app name and the icon,
 4. adds `policies.json`, our default prefs and the bundled extensions,
-5. re-signs the app (ad hoc on macOS).
+5. re-signs the app (ad hoc on macOS),
+6. writes `act/build.json` (version, update key) for the updater.
 
 So updating to a new Firefox is mostly bumping the version in
 `act.config.json` and checking nothing broke.
@@ -186,6 +232,8 @@ src/
     │   ├── ActUrlbar.sys.mjs       address bar provider
     │   ├── ActExtensions.sys.mjs   the downloads + extensions row
     │   ├── ActAgents.sys.mjs       starts the agent server on demand
+    │   ├── ActUpdater.sys.mjs      self-updates from GitHub releases
+    │   ├── ActFraming.sys.mjs      lets any site be framed
     │   └── actors/                 new tab bridge, upload from clipboard
     └── content/
         ├── browser/                scripts + CSS loaded into each window

@@ -79,6 +79,22 @@ async function bundleExtensions(resources) {
   }
 }
 
+// What the updater needs to know about this build.
+function writeBuildInfo(resources) {
+  let pkg = JSON.parse(fs.readFileSync(path.join(ROOT, "package.json"), "utf8"));
+  let info = {
+    version: pkg.version,
+    platform,
+    firefox: config.firefox.version,
+    repo: config.updates?.repo || "",
+    publicKey: config.updates?.publicKey || "",
+  };
+  fs.writeFileSync(
+    path.join(resources, "act", "build.json"),
+    JSON.stringify(info, null, 2) + "\n"
+  );
+}
+
 function installActFiles(resources) {
   for (let [from, to] of INSTALL) {
     let target = path.join(resources, to);
@@ -88,6 +104,7 @@ function installActFiles(resources) {
   let agentTarget = path.join(resources, AGENT[1]);
   rm(agentTarget);
   copy(path.join(ROOT, AGENT[0]), agentTarget);
+  writeBuildInfo(resources);
 }
 
 // The brand name and logos live inside browser/omni.ja, which is a zip.

@@ -9,6 +9,8 @@ ChromeUtils.defineESModuleGetters(lazy, {
   AboutNewTab: "resource:///modules/AboutNewTab.sys.mjs",
   ActAgents: "resource://act/ActAgents.sys.mjs",
   ActExtensions: "resource://act/ActExtensions.sys.mjs",
+  ActFraming: "resource://act/ActFraming.sys.mjs",
+  ActUpdater: "resource://act/ActUpdater.sys.mjs",
   ActUrlbar: "resource://act/ActUrlbar.sys.mjs",
   CustomizableUI:
     "moz-src:///browser/components/customizableui/CustomizableUI.sys.mjs",
@@ -31,6 +33,7 @@ const WINDOW_SCRIPTS = [
   "chrome://act/content/browser/act-site-actions.js",
   "chrome://act/content/browser/act-context-menu.js",
   "chrome://act/content/browser/act-upload.js",
+  "chrome://act/content/browser/act-updates.js",
 ];
 
 const WINDOW_STYLES = ["chrome://act/content/browser/act-browser.css"];
@@ -45,6 +48,12 @@ export const ActStartup = {
     }
     this._started = true;
     this._setHomepage();
+    // Before any page loads, so the first frames are covered too.
+    try {
+      lazy.ActFraming.init();
+    } catch (e) {
+      console.error("Act: framing", e);
+    }
     Services.obs.addObserver(this, "chrome-document-global-created");
     Services.obs.addObserver(this, "browser-delayed-startup-finished");
   },
@@ -178,6 +187,12 @@ export const ActStartup = {
       lazy.ActAgents.init();
     } catch (e) {
       console.error("Act: agent control", e);
+    }
+
+    try {
+      lazy.ActUpdater.init();
+    } catch (e) {
+      console.error("Act: updater", e);
     }
 
     this._applyNewTab();

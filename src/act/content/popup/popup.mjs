@@ -19,6 +19,9 @@ const { ActPrefs, watchPrefs } = ChromeUtils.importESModule(
 const { ActAgents } = ChromeUtils.importESModule(
   "resource://act/ActAgents.sys.mjs"
 );
+const { ActUpdater } = ChromeUtils.importESModule(
+  "resource://act/ActUpdater.sys.mjs"
+);
 
 // The browser window this popup belongs to.
 const win = window.browsingContext.topChromeWindow;
@@ -107,11 +110,21 @@ function loadSettings() {
   $("compact-toggle").checked = ActPrefs.compactMode;
   $("version").textContent = `built on Firefox ${Services.appinfo.version}`;
 
+  showUpdateState();
+
   let agents = ActPrefs.agentsEnabled;
   $("agent-setup").hidden = !agents;
   $("agent-status").textContent = agents
     ? `Listening on localhost:${ActPrefs.agentsPort}. Paste the command in a terminal, then restart your agent.`
     : "";
+}
+
+function showUpdateState() {
+  $("act-version").textContent = ActUpdater.currentVersion;
+  $("update-status").textContent = ActUpdater.message;
+  $("restart-update").hidden = ActUpdater.state != "ready";
+  $("check-updates").disabled =
+    !ActUpdater.supported || ["checking", "downloading", "ready"].includes(ActUpdater.state);
 }
 
 function copyCommand(command) {
@@ -149,6 +162,15 @@ for (let input of document.querySelectorAll("[data-pref]")) {
     Services.prefs.setBoolPref(input.dataset.pref, input.checked);
   });
 }
+$("check-updates").addEventListener("click", () => ActUpdater.check());
+$("restart-update").addEventListener("click", () => ActUpdater.restartToUpdate());
+let updateObserver = () => showUpdateState();
+Services.obs.addObserver(updateObserver, ActUpdater.STATE_TOPIC);
+window.addEventListener(
+  "unload",
+  () => Services.obs.removeObserver(updateObserver, ActUpdater.STATE_TOPIC),
+  { once: true }
+);
 $("copy-claude").addEventListener("click", () => copyCommand(agentCommand("claude")));
 $("copy-codex").addEventListener("click", () => copyCommand(agentCommand("codex")));
 $("compact-toggle").addEventListener("change", e => {
