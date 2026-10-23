@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src chrome:; img-src chrome: https: data: page-icon: moz-icon:; connect-src https: http:; style-src chrome: 'unsafe-inline'">
+  <title>Act</title>
+  <link rel="stylesheet" href="chrome://act/content/panel/panel.css">
+  <script type="module" src="chrome://act/content/panel/panel.mjs"></script>
+</head>
+<body>
+  <header id="topbar">
+    <nav id="tabs" role="tablist">
+      <button role="tab" data-view="ask" id="tab-ask">Ask</button>
+      <button role="tab" data-view="explore" id="tab-explore">Explore</button>
+    </nav>
+    <div class="spacer"></div>
+    <button class="icon-button" id="new-chat" title="New chat">
+      <img src="chrome://act/content/icons/new-chat.svg" alt="">
+    </button>
+    <button class="icon-button" id="open-settings" title="Settings">
+      <img src="chrome://act/content/icons/settings.svg" alt="">
+    </button>
+    <button class="icon-button" id="close-panel" title="Close (Ctrl+Alt+A)">
+      <img src="chrome://act/content/icons/close.svg" alt="">
+    </button>
+  </header>
+
+  <!-- Ask: the assistant -->
+  <section id="view-ask" class="view" hidden>
+    <div id="setup-card" class="card" hidden>
+      <h2>Connect an AI model</h2>
+      <p>Act uses <a href="https://groq.com">Groq</a> for fast answers. Create a free API key and paste it in settings.</p>
+      <div class="row">
+        <button class="primary" id="setup-get-key">Get a key</button>
+        <button id="setup-open-settings">Open settings</button>
+      </div>
+    </div>
+
+    <div id="messages" aria-live="polite">
+      <div id="empty-state">
+        <img class="logo" src="chrome://act/content/icons/act.svg" alt="">
+        <h1>What can I do for you?</h1>
+        <div id="suggestions">
+          <button class="suggestion" data-prompt="Summarize this page.">Summarize this page</button>
+          <button class="suggestion" data-prompt="What are the key points of this page, and is anything on it out of date?">Key points of this page</button>
+          <button class="suggestion" data-actuent data-prompt="What are some good alternatives to the site I'm on, and how do their prices compare?">Alternatives to this site</button>
+          <button class="suggestion" data-actuent data-prompt="What's on this weekend near me? Ask me for my city if you need it.">What's on this weekend?</button>
+        </div>
+      </div>
+    </div>
+
+    <form id="composer">
+      <textarea id="prompt" rows="1" placeholder="Ask anything…"></textarea>
+      <button type="submit" id="send" class="icon-button" title="Send (Enter)">
+        <img src="chrome://act/content/icons/send.svg" alt="">
+      </button>
+      <button type="button" id="stop" class="icon-button" title="Stop" hidden>
+        <img src="chrome://act/content/icons/stop.svg" alt="">
+      </button>
+    </form>
+  </section>
+
+  <!-- Explore: Actuent search -->
+  <section id="view-explore" class="view" hidden>
+    <form id="explore-form">
+      <input id="explore-query" type="search" placeholder="Places, products, events, sites…" autocomplete="off">
+      <div class="row filters">
+        <input id="explore-city" type="text" placeholder="City" autocomplete="off">
+        <label><input id="explore-open" type="checkbox"> Open now</label>
+        <label><input id="explore-news" type="checkbox"> News</label>
+      </div>
+    </form>
+    <div id="explore-status" class="status"></div>
+    <div id="explore-results"></div>
+    <footer class="attribution">Live results from <a href="https://actuent.ai">Actuent</a></footer>
+  </section>
+
+  <!-- Settings -->
+  <section id="view-settings" class="view" hidden>
+    <h2>Act</h2>
+    <label class="switch"><input type="checkbox" data-pref="act.ai.enabled"><span>AI assistant</span></label>
+    <label class="switch"><input type="checkbox" data-pref="act.actuent.enabled"><span>Actuent live web</span></label>
+    <p class="hint">Turn either one off and its buttons, menus and network requests go away.</p>
+
+    <h2>Browser</h2>
+    <label class="switch"><input type="checkbox" id="compact-toggle"><span>Compact mode <kbd>Ctrl+Alt+C</kbd></span></label>
+    <label class="switch"><input type="checkbox" data-pref="act.workspaces.enabled"><span>Workspaces</span></label>
+    <label class="switch"><input type="checkbox" data-pref="sidebar.verticalTabs"><span>Tabs on the left</span></label>
+
+    <fieldset id="ai-settings">
+      <h2>AI</h2>
+      <label class="field">
+        <span>Groq API key</span>
+        <div class="row">
+          <input id="api-key" type="password" placeholder="gsk_…" autocomplete="off" spellcheck="false">
+          <button id="save-key">Save</button>
+        </div>
+        <small id="key-status" class="hint">Stored in the Firefox password manager.</small>
+      </label>
+      <label class="field">
+        <span>Model</span>
+        <div class="row">
+          <select id="model"></select>
+          <button id="refresh-models" title="Load models from the provider">↻</button>
+        </div>
+      </label>
+      <label class="switch"><input type="checkbox" data-pref="act.ai.pageContext"><span>Let the assistant read the current page</span></label>
+      <details>
+        <summary>Advanced</summary>
+        <label class="field">
+          <span>API endpoint (OpenAI compatible)</span>
+          <input type="url" data-pref="act.ai.endpoint" spellcheck="false">
+        </label>
+        <label class="field">
+          <span>Temperature</span>
+          <input type="number" min="0" max="2" step="0.1" data-pref="act.ai.temperature">
+        </label>
+      </details>
+    </fieldset>
+
+    <fieldset id="actuent-settings">
+      <h2>Actuent</h2>
+      <label class="switch"><input type="checkbox" data-pref="act.actuent.urlbar"><span>Suggestions in the address bar</span></label>
+      <label class="switch"><input type="checkbox" data-pref="act.actuent.siteActions"><span>Site actions button</span></label>
+      <p class="hint">Site actions sends the domain you're visiting (not the full address) to Actuent. Never in private windows.</p>
+      <details>
+        <summary>Advanced</summary>
+        <label class="field">
+          <span>Actuent endpoint</span>
+          <input type="url" data-pref="act.actuent.endpoint" spellcheck="false">
+        </label>
+      </details>
+    </fieldset>
+
+    <p class="hint about">Act Browser · <span id="version"></span></p>
+  </section>
+</body>
+</html>

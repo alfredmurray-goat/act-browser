@@ -1,0 +1,371 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+/* Act Browser window styles. Loaded as an author sheet into browser.xhtml. */
+
+:root {
+  --act-gap: 8px;
+  --act-radius: 10px;
+  --act-accent: #6d5dfc;
+  --act-accent-soft: color-mix(in srgb, var(--act-accent) 14%, transparent);
+  --act-chrome-bg: var(--toolbox-background-color, var(--toolbar-background-color));
+  --act-shadow: 0 0 0 1px color-mix(in srgb, currentColor 9%, transparent),
+    0 4px 16px -6px rgba(0, 0, 0, 0.18);
+}
+
+/* --- Floating content ------------------------------------------------------- */
+
+/* One continuous chrome color around the page, so the web content reads as
+   a card sitting on top of it. */
+#navigator-toolbox,
+#browser,
+#sidebar-container,
+#act-panel {
+  background-color: var(--act-chrome-bg);
+}
+
+/* Themes with a header image keep it. */
+:root[lwtheme-image] #navigator-toolbox {
+  background-color: transparent;
+}
+
+:root:not([inDOMFullscreen], [sizemode="fullscreen"]) {
+  #tabbrowser-tabbox {
+    padding: 0 var(--act-gap) var(--act-gap) 0;
+    background: transparent;
+  }
+
+  #tabbrowser-tabpanels {
+    background: transparent;
+  }
+
+  #tabbrowser-tabpanels > :not(.split-view-panel) .browserContainer {
+    border: none !important;
+    border-radius: var(--act-radius) !important;
+    box-shadow: var(--act-shadow);
+    overflow: clip;
+  }
+
+  /* Without the tab sidebar there's chrome on the left again. */
+  @media (not -moz-pref("sidebar.verticalTabs")) {
+    #tabbrowser-tabbox {
+      padding-inline-start: var(--act-gap);
+    }
+  }
+
+  &[act-panel-open] #tabbrowser-tabbox {
+    padding-inline-end: 0;
+  }
+}
+
+/* The toolbar sits flush on the chrome, no separator line. */
+#navigator-toolbox {
+  border-bottom: none !important;
+}
+
+#nav-bar {
+  box-shadow: none !important;
+  border-top: none !important;
+  background-color: transparent !important;
+}
+
+/* --- Tab sidebar ---------------------------------------------------------- */
+
+#sidebar-container {
+  flex-direction: column;
+  /* Firefox's sidebar paints its own background, make it match the chrome. */
+  --sidebar-background-color: var(--act-chrome-bg);
+
+  > sidebar-main {
+    flex: 1;
+    min-height: 0;
+    background: transparent;
+  }
+}
+
+#vertical-tabs .tabbrowser-tab[selected] .tab-background {
+  box-shadow: var(--act-shadow);
+}
+
+/* --- Compact mode ----------------------------------------------------------- */
+
+/* The toolbar slides away and comes back when you move the mouse to the top
+   of the window or focus the address bar. */
+:root[act-compact]:not([customizing]) {
+  #navigator-toolbox {
+    --act-toolbar-peek: 6px;
+
+    position: relative;
+    z-index: 3;
+    min-height: var(--act-toolbar-peek);
+  }
+
+  #nav-bar {
+    margin-top: calc(-1 * var(--tab-min-height, 40px) - 8px);
+    opacity: 0;
+    transition: margin-top 160ms ease, opacity 120ms ease;
+  }
+
+  #navigator-toolbox:is(:hover, :focus-within),
+  #navigator-toolbox:has([open], [panelopen]) {
+    #nav-bar {
+      margin-top: 0;
+      opacity: 1;
+    }
+  }
+
+  #tabbrowser-tabbox {
+    padding-top: 0;
+  }
+}
+
+/* --- Act toolbar button ------------------------------------------------------- */
+
+#act-button {
+  list-style-image: url("chrome://act/content/icons/act.svg");
+}
+
+#act-button[checked] > .toolbarbutton-icon {
+  background-color: var(--act-accent-soft) !important;
+  fill: var(--act-accent);
+}
+
+/* --- Act panel ------------------------------------------------------------- */
+
+/* SidebarController orders #browser's children with `order`, keep the panel
+   at the far end whatever side the tabs are on. */
+#act-panel-splitter {
+  order: 98;
+}
+
+#act-panel {
+  order: 99;
+  min-width: 280px;
+  max-width: 50vw;
+  padding: 0 var(--act-gap) var(--act-gap) 0;
+}
+
+#act-panel-frame {
+  flex: 1;
+  border: none;
+  border-radius: var(--act-radius);
+  box-shadow: var(--act-shadow);
+  background-color: var(--tabpanel-background-color, Canvas);
+  color-scheme: inherit;
+}
+
+#act-panel-splitter {
+  width: var(--act-gap) !important;
+  min-width: var(--act-gap);
+  border: none !important;
+  background: transparent !important;
+  margin: 0 !important;
+}
+
+/* --- Workspaces ------------------------------------------------------------ */
+
+#act-workspaces {
+  gap: 2px;
+  padding: 6px 8px 8px;
+  border-top: 1px solid color-mix(in srgb, currentColor 8%, transparent);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+:root:not([act-workspaces]) #act-workspaces {
+  display: none;
+}
+
+#act-workspace-name {
+  flex: 1;
+  margin: 0 4px 0 2px !important;
+  font-weight: 600;
+  font-size: 0.9em;
+  opacity: 0.75;
+  min-width: 0;
+}
+
+.act-workspace {
+  appearance: none;
+  min-width: 28px;
+  height: 28px;
+  padding: 0 !important;
+  margin: 0 !important;
+  border-radius: 7px;
+  justify-content: center;
+  font-size: 14px;
+  opacity: 0.6;
+  filter: grayscale(0.6);
+
+  > .toolbarbutton-text {
+    padding: 0 !important;
+    text-align: center;
+  }
+
+  &:hover {
+    opacity: 1;
+    filter: none;
+    background-color: var(--toolbarbutton-background-color-hover, rgba(128, 128, 128, 0.15));
+  }
+
+  &[selected] {
+    opacity: 1;
+    filter: none;
+    background-color: var(--act-accent-soft);
+  }
+}
+
+#act-workspace-add {
+  font-size: 16px;
+  font-weight: 300;
+}
+
+/* The sidebar collapsed to icons (compact or expand-on-hover): only show the
+   active workspace, stacked. */
+#sidebar-main:not([expanded]) ~ #act-workspaces,
+#sidebar-container:has(sidebar-main:not([expanded])) #act-workspaces {
+  flex-direction: column;
+  padding-inline: 4px;
+
+  #act-workspace-name,
+  #act-workspace-add,
+  .act-workspace:not([selected]) {
+    display: none;
+  }
+}
+
+/* --- Site actions button & popup ------------------------------------------- */
+
+#act-site-button {
+  > .urlbar-icon {
+    list-style-image: url("chrome://act/content/icons/site-actions.svg");
+  }
+
+  &[native] > .urlbar-icon {
+    fill: var(--act-accent);
+  }
+}
+
+#act-site-badge {
+  margin: 0 0 0 2px !important;
+  font-size: 0.8em;
+  font-weight: 600;
+  opacity: 0.8;
+}
+
+#act-site-panel {
+  --panel-padding: 0;
+}
+
+#act-site-panel-body {
+  width: 320px;
+  max-height: 480px;
+  overflow-y: auto;
+  padding: 14px;
+  font: menu;
+
+  button {
+    font: inherit;
+  }
+}
+
+.act-site-header {
+  margin-bottom: 8px;
+}
+
+.act-site-name {
+  font-size: 1.15em;
+  font-weight: 600;
+}
+
+.act-site-meta {
+  opacity: 0.7;
+  font-size: 0.9em;
+}
+
+.act-site-native {
+  display: inline-block;
+  margin-top: 4px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 0.8em;
+  background: var(--act-accent-soft);
+  color: var(--act-accent);
+}
+
+.act-site-summary {
+  margin: 0 0 10px;
+  line-height: 1.4;
+}
+
+.act-site-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.act-site-action {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 8px 10px;
+  border: 1px solid color-mix(in srgb, currentColor 12%, transparent);
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  text-align: start;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    border-color: var(--act-accent);
+    background: var(--act-accent-soft);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
+}
+
+.act-site-action-name {
+  font-weight: 600;
+}
+
+.act-site-action-desc {
+  opacity: 0.75;
+  font-size: 0.9em;
+}
+
+.act-site-footer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.act-site-link {
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--act-accent);
+  cursor: pointer;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.act-site-source {
+  margin-inline-start: auto;
+  opacity: 0.5;
+  font-size: 0.85em;
+}
+
+/* --- Feature switches ---------------------------------------------------- */
+
+:root:not([act-ai]) :is(#act-context-ask, #act-context-summarize),
+:root:not([act-actuent]) :is(#act-context-lookup, #act-site-button) {
+  display: none;
+}

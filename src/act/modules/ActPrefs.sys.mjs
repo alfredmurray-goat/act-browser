@@ -1,0 +1,93 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+export const PREF = {
+  aiEnabled: "act.ai.enabled",
+  aiEndpoint: "act.ai.endpoint",
+  aiModel: "act.ai.model",
+  aiTemperature: "act.ai.temperature",
+  aiPageContext: "act.ai.pageContext",
+  actuentEnabled: "act.actuent.enabled",
+  actuentEndpoint: "act.actuent.endpoint",
+  actuentUrlbar: "act.actuent.urlbar",
+  actuentUrlbarMax: "act.actuent.urlbar.maxResults",
+  actuentSiteActions: "act.actuent.siteActions",
+  compactMode: "act.compactMode",
+  panelWidth: "act.panel.width",
+  panelOpen: "act.panel.open",
+  workspacesEnabled: "act.workspaces.enabled",
+  workspacesList: "act.workspaces.list",
+};
+
+// Live views of our prefs. Read them as ActPrefs.aiEnabled etc.
+//
+// These read the pref every time instead of caching. Pref reads are cheap,
+// and a cache could still hold the old value inside a pref observer.
+export const ActPrefs = {};
+
+const defs = [
+  ["aiEnabled", true],
+  ["aiEndpoint", "https://api.groq.com/openai/v1"],
+  ["aiModel", "openai/gpt-oss-120b"],
+  ["aiTemperature", "0.4"],
+  ["aiPageContext", true],
+  ["actuentEnabled", true],
+  ["actuentEndpoint", "https://api.actuent.ai"],
+  ["actuentUrlbar", true],
+  ["actuentUrlbarMax", 3],
+  ["actuentSiteActions", true],
+  ["compactMode", false],
+  ["panelWidth", 380],
+  ["panelOpen", false],
+  ["workspacesEnabled", true],
+  ["workspacesList", "[]"],
+];
+
+for (let [key, fallback] of defs) {
+  let name = PREF[key];
+  let get;
+  switch (typeof fallback) {
+    case "boolean":
+      get = () => Services.prefs.getBoolPref(name, fallback);
+      break;
+    case "number":
+      get = () => Services.prefs.getIntPref(name, fallback);
+      break;
+    default:
+      get = () => Services.prefs.getStringPref(name, fallback);
+  }
+  Object.defineProperty(ActPrefs, key, { get, enumerable: true });
+}
+
+/**
+ * Write a pref without caring about its type.
+ */
+export function setActPref(name, value) {
+  switch (typeof value) {
+    case "boolean":
+      Services.prefs.setBoolPref(name, value);
+      break;
+    case "number":
+      Services.prefs.setIntPref(name, Math.round(value));
+      break;
+    default:
+      Services.prefs.setStringPref(name, String(value));
+  }
+}
+
+/**
+ * Calls `callback(prefName)` whenever one of the given prefs changes.
+ * Returns a function that removes the observers again.
+ */
+export function watchPrefs(names, callback) {
+  let observer = (_subject, _topic, data) => callback(data);
+  for (let name of names) {
+    Services.prefs.addObserver(name, observer);
+  }
+  return () => {
+    for (let name of names) {
+      Services.prefs.removeObserver(name, observer);
+    }
+  };
+}

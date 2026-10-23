@@ -1,0 +1,8 @@
+{
+  "name": "Act Browser",
+  "id": "org.actbrowser.act",
+  "firefox": {
+    "version": "158.0.1",
+    "locale": "en-US"
+  }
+}
