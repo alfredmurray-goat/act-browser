@@ -20,6 +20,8 @@ var ActLayout = {
 
   init() {
     this._buildHeader();
+    this._buildFooter();
+    this._hideSidebarTools();
 
     this.hotzone = document.createXULElement("box");
     this.hotzone.id = "act-hotzone";
@@ -44,6 +46,37 @@ var ActLayout = {
     title.setAttribute("context", "act-workspace-menu");
     header.append(titlebar, title);
     document.getElementById("sidebar-container").prepend(header);
+  },
+
+  // Bottom of the sidebar, one row: workspaces on the left, downloads and
+  // extensions on the right (act-workspaces.js and act-extensions.js fill
+  // it).
+  _buildFooter() {
+    let footer = document.createXULElement("hbox");
+    footer.id = "act-sidebar-footer";
+    footer.setAttribute("align", "center");
+    document.getElementById("sidebar-container").append(footer);
+  },
+
+  // Firefox's own sidebar puts bookmarks, history and a settings button
+  // under the tabs. Zen doesn't, and with our footer it's one row too many.
+  // They're inside the sidebar's shadow DOM, so the CSS has to go in there.
+  _hideSidebarTools() {
+    let main = document.querySelector("sidebar-main");
+    let root = main?.shadowRoot;
+    if (!root) {
+      // Not rendered yet.
+      setTimeout(() => this._hideSidebarTools(), 200);
+      return;
+    }
+    let sheet = new CSSStyleSheet();
+    sheet.replaceSync(`
+      :host(:not([act-show-tools])) .buttons-wrapper,
+      :host(:not([act-show-tools])) .wrapper > splitter {
+        display: none !important;
+      }
+    `);
+    root.adoptedStyleSheets = [...root.adoptedStyleSheets, sheet];
   },
 
   uninit() {

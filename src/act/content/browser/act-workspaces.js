@@ -318,8 +318,8 @@ var ActWorkspaces = {
       }
     });
 
-    // Lives under the tab list, outside of Firefox's own sidebar element.
-    document.getElementById("sidebar-container").append(this.strip);
+    // Left side of the footer under the tab list (see act-layout.js).
+    document.getElementById("act-sidebar-footer").prepend(this.strip);
   },
 
   _renderStrip() {

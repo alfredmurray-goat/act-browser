@@ -16,13 +16,8 @@ var ActExtensionsBar = {
     );
     this.toolbar = ActExtensions.createToolbar(document);
 
-    let container = document.getElementById("sidebar-container");
-    let workspaces = document.getElementById("act-workspaces");
-    if (workspaces) {
-      workspaces.before(this.toolbar);
-    } else {
-      container.append(this.toolbar);
-    }
+    // Right side of the footer under the tab list (see act-layout.js).
+    document.getElementById("act-sidebar-footer").append(this.toolbar);
 
     CustomizableUI.registerToolbarNode(this.toolbar);
     ActExtensions.sync();

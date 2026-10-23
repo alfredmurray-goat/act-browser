@@ -103,8 +103,21 @@
   }
 }
 
-/* Zen style tabs: no outlines, a soft highlight for the current one. */
+/* Zen style tabs: compact rows, no outlines, a soft highlight for the
+   current one. */
 #vertical-tabs .tabbrowser-tab {
+  --tab-min-height: 32px;
+  padding-block: 0 !important;
+
+  .tab-background {
+    margin-block: 1px !important;
+    margin-inline: 8px !important;
+  }
+
+  .tab-label {
+    font-size: 0.95em;
+  }
+
   .tab-background {
     border: none !important;
     outline: none !important;
@@ -134,7 +147,7 @@
 }
 
 #act-workspace-title {
-  margin: 0 14px 4px !important;
+  margin: 0 18px 6px !important;
   font-weight: 600;
   font-size: 1.05em;
   opacity: 0.85;
@@ -182,10 +195,17 @@
 
 /* --- Workspaces ------------------------------------------------------------ */
 
-#act-workspaces {
-  gap: 2px;
+/* One row under the tabs: workspaces left, downloads and extensions right. */
+#act-sidebar-footer {
+  gap: 4px;
   padding: 6px 8px 8px;
-  border-top: 1px solid color-mix(in srgb, currentColor 8%, transparent);
+  min-height: 44px;
+}
+
+#act-workspaces {
+  flex: 1;
+  gap: 2px;
+  min-width: 0;
   overflow-x: auto;
   scrollbar-width: none;
 }
@@ -577,12 +597,15 @@
 /* --- Extensions in the sidebar ------------------------------------------- */
 
 #act-extensions-bar {
-  flex-wrap: wrap;
-  gap: 2px;
-  padding: 4px 6px 0;
+  flex: none;
+  gap: 0;
+  padding: 0;
+  margin: 0;
   background: transparent;
   border: none;
   min-height: 0;
+  max-width: 60%;
+  overflow: hidden;
 
   &:empty,
   &:not(:has(toolbarbutton, toolbaritem)) {
@@ -591,5 +614,13 @@
 
   .toolbarbutton-1 {
     margin: 0 !important;
+    --toolbarbutton-outer-padding: 1px;
+    --toolbarbutton-inner-padding: 6px;
+    opacity: 0.75;
+
+    &:hover,
+    &[open] {
+      opacity: 1;
+    }
   }
 }
