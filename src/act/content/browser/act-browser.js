@@ -61,6 +61,7 @@ var ActBrowser = {
     for (let part of [
       ActLayout,
       ActWorkspaces,
+      ActTabGroups,
       ActExtensionsBar,
       ActPopup,
       ActSiteActions,
@@ -141,6 +142,9 @@ var ActBrowser = {
         break;
       case "KeyC":
         this.toggleCompactMode();
+        break;
+      case "KeyG":
+        ActTabGroups.create();
         break;
       case "ArrowRight":
         ActWorkspaces.cycle(1);

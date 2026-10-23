@@ -23,6 +23,8 @@ pref("act.layout.sidebarToolbar", false);
 pref("act.extensions.inSidebar", true);
 // The Act start page for new tabs (and the home page).
 pref("act.newtab.enabled", true);
+// Sites saved on the start page, as JSON [{url, title}].
+pref("act.newtab.savedSites", "[]");
 
 // Weather on the new tab page, from Rejn (https://rejn.app). The place is
 // fixed unless useMyLocation is on, then Rejn asks for the browser's
@@ -69,6 +71,9 @@ pref("sidebar.main.tools", "history,bookmarks");
 
 // Downloads sit at the bottom of the sidebar, always visible.
 pref("browser.download.autohideButton", false);
+
+// Closing the last tab leaves a new tab instead of closing the window.
+pref("browser.tabs.closeWindowWithLastTab", false);
 
 // Keep the chrome quiet.
 pref("browser.toolbars.bookmarks.visibility", "never");

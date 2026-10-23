@@ -28,17 +28,28 @@
     </div>
 
     <form id="search" role="search">
-      <input id="query" type="search" autocomplete="off" spellcheck="false" aria-label="Search">
-      <button type="submit" id="actuent-search" title="Search Actuent (Enter)">Actuent</button>
-      <button type="button" id="web-search" title="Search the web (Shift+Enter)"></button>
+      <div id="searchbox">
+        <svg class="search-icon" viewBox="0 0 16 16" aria-hidden="true">
+          <path d="M7 1.75a5.25 5.25 0 0 1 4.16 8.46l3.07 3.07a.75.75 0 1 1-1.06 1.06l-3.07-3.07A5.25 5.25 0 1 1 7 1.75zm0 1.5a3.75 3.75 0 1 0 0 7.5 3.75 3.75 0 0 0 0-7.5z"/>
+        </svg>
+        <input id="query" type="search" autocomplete="off" spellcheck="false"
+               role="combobox" aria-autocomplete="list" aria-expanded="false"
+               aria-controls="suggest" aria-label="Search">
+      </div>
+      <ul id="suggest" role="listbox" hidden></ul>
     </form>
-    <div id="status" class="status" aria-live="polite"></div>
-    <div id="results"></div>
 
     <div id="below">
-      <nav id="top-sites" aria-label="Top sites"></nav>
+      <nav id="saved-sites" class="site-grid" aria-label="Saved sites"></nav>
+      <form id="add-site" hidden>
+        <input id="add-site-url" type="text" placeholder="Address, e.g. github.com" autocomplete="off" spellcheck="false" required>
+        <input id="add-site-name" type="text" placeholder="Name (optional)" autocomplete="off">
+        <button type="submit">Save</button>
+        <button type="button" id="add-site-cancel">Cancel</button>
+      </form>
+      <h2 id="top-sites-heading" hidden>Frequently visited</h2>
+      <nav id="top-sites" class="site-grid" aria-label="Frequently visited"></nav>
     </div>
   </main>
-  <footer id="credit" hidden>Live results from <a href="https://actuent.ai">Actuent</a></footer>
 </body>
 </html>

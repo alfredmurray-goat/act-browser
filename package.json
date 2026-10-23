@@ -1,6 +1,6 @@
 {
   "name": "act-browser",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "private": true,
   "description": "A Firefox based browser with everything in the sidebar, workspaces, and the live web built in through Actuent.",
   "license": "MPL-2.0",
@@ -14,6 +14,7 @@
     "dev": "node scripts/dev.mjs",
     "package": "node scripts/package.mjs",
     "lint": "node scripts/check.mjs",
-    "keygen": "node scripts/keygen.mjs"
+    "keygen": "node scripts/keygen.mjs",
+    "smoke": "node scripts/smoke.mjs"
   }
 }

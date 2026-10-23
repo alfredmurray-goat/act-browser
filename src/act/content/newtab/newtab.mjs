@@ -2,13 +2,14 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-// The Act new tab page: a search box that asks Actuent (live, as you type)
-// or the default search engine, the sites you visit most, and the weather.
+// The Act new tab page: one search box (your search engine, with Actuent's
+// live results in its suggestions), the sites you visit most, and the
+// weather.
 //
 // This page runs as normal web content. Whatever it needs from the browser
 // comes through window.ActNewTab (see modules/actors/ActNewTabChild).
 
-import { el, handleLinks, renderResults } from "../shared/actuent-ui.mjs";
+import { el, formatDate, formatPrice, handleLinks } from "../shared/actuent-ui.mjs";
 import { createRejnWeather } from "../shared/rejn-weather.mjs";
 
 const $ = id => document.getElementById(id);
@@ -21,6 +22,11 @@ let state = null;
 let searchTicket = 0;
 let liveTimer = null;
 let weather = null;
+
+// The dropdown: rows are { title, meta, side, sideClass, icon, url | run }.
+let actuentRows = [];
+let actuentStatus = ""; // "", "loading" or a message
+let selected = 0;
 
 function isWebUrl(url) {
   try {
@@ -62,6 +68,23 @@ function greeting() {
 
 // --- Search ---------------------------------------------------------------------------
 
+const SVG_NS = "http://www.w3.org/2000/svg";
+const ICONS = {
+  search:
+    "M7 1.75a5.25 5.25 0 0 1 4.16 8.46l3.07 3.07a.75.75 0 1 1-1.06 1.06l-3.07-3.07A5.25 5.25 0 1 1 7 1.75zm0 1.5a3.75 3.75 0 1 0 0 7.5 3.75 3.75 0 0 0 0-7.5z",
+  globe:
+    "M8 1a7 7 0 1 1 0 14A7 7 0 0 1 8 1zm2.4 7.75H5.6c.1 1.97.79 3.6 1.4 4.42.3.04.66.08 1 .08s.7-.04 1-.08c.61-.82 1.3-2.45 1.4-4.42zm-6.3 0H2.55a5.5 5.5 0 0 0 3.2 4.53 9.3 9.3 0 0 1-1.15-4.53zm9.35 0H11.9a9.3 9.3 0 0 1-1.15 4.53 5.5 5.5 0 0 0 2.7-4.53zM5.75 2.72a5.5 5.5 0 0 0-3.2 4.53H4.1c.1-1.8.53-3.35 1.15-4.53zM8 2.5c-.34 0-.7.04-1 .08-.61.82-1.3 2.45-1.4 4.42h4.8c-.1-1.97-.79-3.6-1.4-4.42-.3-.04-.66-.08-1-.08zm2.25.22c.62 1.18 1.06 2.73 1.15 4.53h1.55a5.5 5.5 0 0 0-2.7-4.53z",
+};
+
+function iconNode(name) {
+  let svg = document.createElementNS(SVG_NS, "svg");
+  svg.setAttribute("viewBox", "0 0 16 16");
+  let path = document.createElementNS(SVG_NS, "path");
+  path.setAttribute("d", ICONS[name]);
+  svg.append(path);
+  return svg;
+}
+
 async function webSearch(query) {
   let url = await api.webSearchUrl(query);
   if (url) {
@@ -69,88 +92,315 @@ async function webSearch(query) {
   }
 }
 
-async function actuentSearch(query, { live = false } = {}) {
-  query = query.trim();
+function toUrl(text) {
+  return /^https?:\/\//i.test(text) ? text : `https://${text}`;
+}
+
+// Turns an Actuent result into dropdown rows: a direct answer first, then
+// places and sites, events and products.
+function actuentToRows(result) {
+  let rows = [];
+  let sentence = result.answer?.sentences?.[0];
+  if (sentence?.text) {
+    rows.push({
+      title: sentence.text,
+      meta: `From ${result.answer.domain}`,
+      letter: "i",
+      url: sentence.url,
+    });
+  }
+  for (let site of (result.sites || []).slice(0, 5)) {
+    let meta = [site.category, site.city].filter(Boolean).join(" · ") || site.domain;
+    let row = {
+      title: site.name,
+      meta: site.summary && site.summary != site.name ? `${meta} — ${site.summary}` : meta,
+      letter: (site.name || site.domain || "?")[0].toUpperCase(),
+      url: site.url,
+    };
+    if (site.openNow === true) {
+      row.side = "Open";
+      row.sideClass = "open";
+    } else if (site.openNow === false) {
+      row.side = "Closed";
+      row.sideClass = "closed";
+    }
+    rows.push(row);
+  }
+  for (let event of (result.events || []).slice(0, 3)) {
+    rows.push({
+      title: event.name,
+      meta: [formatDate(event.start), event.venue].filter(Boolean).join(" · "),
+      side: event.price != null ? formatPrice(event.price, event.currency) : "",
+      letter: "★",
+      url: event.url,
+    });
+  }
+  for (let product of (result.products || []).slice(0, 3)) {
+    rows.push({
+      title: product.name,
+      meta: product.domain,
+      side: formatPrice(product.price, product.currency),
+      letter: "$",
+      url: product.url,
+    });
+  }
+  return rows.filter(row => row.title && isWebUrl(row.url));
+}
+
+function currentRows() {
+  let query = $("query").value.trim();
   if (!query) {
-    clearResults();
+    return [];
+  }
+  let rows = [];
+  if (looksLikeUrl(query)) {
+    rows.push({ title: query, meta: "Go to site", icon: "globe", url: toUrl(query) });
+  }
+  rows.push({
+    title: query,
+    meta: `Search with ${state?.engineName || "the web"}`,
+    icon: "search",
+    run: () => webSearch(query),
+  });
+  return [...rows, ...actuentRows];
+}
+
+function renderSuggestions() {
+  let list = $("suggest");
+  let rows = currentRows();
+  let open = rows.length > 0 && document.activeElement == $("query");
+  list.hidden = !open;
+  $("search").classList.toggle("open", open);
+  $("query").setAttribute("aria-expanded", open);
+  if (!open) {
     return;
   }
-  let ticket = ++searchTicket;
-  if (!live) {
-    $("status").textContent = "Searching…";
+  selected = Math.min(selected, rows.length - 1);
+
+  let items = [];
+  let actuentStart = rows.length - actuentRows.length;
+  rows.forEach((row, i) => {
+    if (i == actuentStart && actuentRows.length) {
+      items.push(el("li", "suggest-heading", "Actuent"));
+    }
+    let li = el("li", "suggestion");
+    li.id = `suggestion-${i}`;
+    li.setAttribute("role", "option");
+    li.setAttribute("aria-selected", i == selected);
+    let icon = el("span", "icon");
+    if (row.icon) {
+      icon.append(iconNode(row.icon));
+    } else {
+      icon.textContent = row.letter || "•";
+    }
+    let text = el("span", "text");
+    text.append(el("span", "title", row.title));
+    if (row.meta) {
+      text.append(el("span", "meta", row.meta));
+    }
+    li.append(icon, text);
+    if (row.side) {
+      li.append(el("span", `side ${row.sideClass || ""}`, row.side));
+    }
+    li.addEventListener("mousemove", () => {
+      if (selected != i) {
+        selected = i;
+        renderSuggestions();
+      }
+    });
+    li.addEventListener("click", e => activate(row, { background: e.ctrlKey || e.metaKey }));
+    items.push(li);
+  });
+
+  if (actuentStatus == "loading" && !actuentRows.length) {
+    items.push(el("li", "suggest-status", "Looking on Actuent…"));
+  } else if (actuentStatus && actuentStatus != "loading") {
+    items.push(el("li", "suggest-status", actuentStatus));
   }
-  let result;
+  if (actuentRows.length) {
+    let credit = el("li", "suggest-credit");
+    let link = el("a", null, "Actuent");
+    link.href = "https://actuent.ai";
+    credit.append("Live results from ", link);
+    items.push(credit);
+  }
+  list.replaceChildren(...items);
+  $("query").setAttribute("aria-activedescendant", `suggestion-${selected}`);
+}
+
+function activate(row, { background = false } = {}) {
+  if (row.run) {
+    row.run();
+  } else if (row.url) {
+    openLink(row.url, { background });
+  }
+}
+
+async function fetchActuent(query) {
+  let ticket = ++searchTicket;
+  actuentStatus = "loading";
+  renderSuggestions();
+  let result = null;
   try {
-    result = await api.search(query, { live });
-  } catch (e) {
-    if (ticket == searchTicket && !live) {
-      $("status").textContent = e.message;
+    result = await api.search(query, { live: true });
+  } catch {
+    // Offline or rate limited: the web search row is still there.
+    if (ticket == searchTicket) {
+      actuentRows = [];
+      actuentStatus = "";
+      renderSuggestions();
     }
     return;
   }
-  // Only the newest search gets to draw, and only while the box still says
-  // what we searched for.
-  if (ticket != searchTicket || $("query").value.trim() != query || !result) {
+  // Only the newest search may draw, and only while the box still says it.
+  if (ticket != searchTicket || $("query").value.trim() != query) {
     return;
   }
-  document.body.classList.add("searching");
-  $("credit").hidden = false;
-  $("status").textContent = renderResults($("results"), result, {
-    openLink,
-    onSearch: related => {
-      $("query").value = related;
-      actuentSearch(related);
-    },
-  });
-}
-
-function clearResults() {
-  searchTicket++;
-  clearTimeout(liveTimer);
-  document.body.classList.remove("searching");
-  $("results").replaceChildren();
-  $("status").textContent = "";
-  $("credit").hidden = true;
+  actuentRows = result ? actuentToRows(result) : [];
+  actuentStatus = "";
+  renderSuggestions();
 }
 
 function onInput() {
   clearTimeout(liveTimer);
+  searchTicket++;
+  actuentRows = [];
+  actuentStatus = "";
+  selected = 0;
   let query = $("query").value.trim();
-  if (!query) {
-    clearResults();
+  renderSuggestions();
+  if (
+    !query ||
+    !state?.actuentEnabled ||
+    query.length < LIVE_MIN_CHARS ||
+    looksLikeUrl(query)
+  ) {
     return;
   }
-  if (!state?.actuentEnabled || query.length < LIVE_MIN_CHARS || looksLikeUrl(query)) {
-    return;
-  }
-  liveTimer = setTimeout(() => actuentSearch(query, { live: true }), LIVE_DELAY_MS);
+  liveTimer = setTimeout(() => fetchActuent(query), LIVE_DELAY_MS);
 }
 
-// --- Top sites ----------------------------------------------------------------------
+function onKeyDown(e) {
+  let rows = currentRows();
+  switch (e.key) {
+    case "ArrowDown":
+    case "ArrowUp":
+      if (rows.length) {
+        e.preventDefault();
+        let step = e.key == "ArrowDown" ? 1 : -1;
+        selected = (selected + step + rows.length) % rows.length;
+        renderSuggestions();
+      }
+      break;
+    case "Enter":
+      e.preventDefault();
+      if (rows[selected]) {
+        activate(rows[selected], { background: e.ctrlKey || e.metaKey });
+      }
+      break;
+    case "Escape":
+      if ($("query").value) {
+        $("query").value = "";
+        onInput();
+      } else {
+        $("query").blur();
+      }
+      break;
+  }
+}
 
-async function loadTopSites() {
-  let sites = (await api.topSites().catch(() => null)) || [];
-  let tiles = sites.map(site => {
-    let link = el("a");
-    link.href = site.url;
-    link.title = site.title || site.url;
-    let tile = el("div", "tile");
-    let host = "";
-    try {
-      host = new URL(site.url).hostname.replace(/^www\./, "");
-    } catch {}
-    if (site.icon?.startsWith("data:")) {
-      let icon = el("img");
-      icon.src = site.icon;
-      icon.alt = "";
-      tile.append(icon);
-    } else {
-      tile.append(el("span", "letter", (host[0] || "?").toUpperCase()));
-    }
-    link.append(tile, el("span", "name", site.title || host));
-    return link;
+// --- Saved and frequent sites ---------------------------------------------------
+
+function hostOf(url) {
+  try {
+    return new URL(url).hostname.replace(/^www\./, "");
+  } catch {
+    return "";
+  }
+}
+
+// One tile. `action` is the small button in its corner: remove for saved
+// sites, save for frequent ones.
+function siteTile(site, action) {
+  let link = el("a", "site");
+  link.href = site.url;
+  link.title = site.title || site.url;
+  let tile = el("div", "tile");
+  let host = hostOf(site.url);
+  if (site.icon?.startsWith("data:")) {
+    let icon = el("img");
+    icon.src = site.icon;
+    icon.alt = "";
+    tile.append(icon);
+  } else {
+    tile.append(el("span", "letter", (host[0] || "?").toUpperCase()));
+  }
+  link.append(tile, el("span", "name", site.title || host));
+
+  if (action) {
+    let button = el("button", `tile-action ${action.kind}`, action.kind == "remove" ? "×" : "+");
+    button.type = "button";
+    button.title = action.label;
+    button.setAttribute("aria-label", action.label);
+    button.addEventListener("click", e => {
+      e.preventDefault();
+      e.stopPropagation();
+      action.run();
+    });
+    link.append(button);
+  }
+  return link;
+}
+
+let savedSites = [];
+
+async function renderSites(saved) {
+  savedSites = saved || (await api.savedSites().catch(() => [])) || [];
+  let savedUrls = new Set(savedSites.map(s => s.url));
+
+  let tiles = savedSites.map(site =>
+    siteTile(site, {
+      kind: "remove",
+      label: `Remove ${site.title || hostOf(site.url)}`,
+      run: async () => renderSites(await api.removeSite(site.url)),
+    })
+  );
+  let add = el("button", "site add-site");
+  add.type = "button";
+  let plus = el("div", "tile");
+  plus.append(el("span", "letter", "+"));
+  add.append(plus, el("span", "name", "Add site"));
+  add.addEventListener("click", () => {
+    $("add-site").hidden = false;
+    $("add-site-url").focus();
   });
-  $("top-sites").replaceChildren(...tiles);
+  $("saved-sites").replaceChildren(...tiles, add);
+
+  let frequent = ((await api.topSites().catch(() => null)) || [])
+    .filter(site => !savedUrls.has(site.url))
+    .slice(0, 8);
+  $("top-sites").replaceChildren(
+    ...frequent.map(site =>
+      siteTile(site, {
+        kind: "save",
+        label: `Save ${site.title || hostOf(site.url)}`,
+        run: async () => renderSites(await api.saveSite(site.url, site.title || "")),
+      })
+    )
+  );
+  $("top-sites-heading").hidden = !frequent.length;
+}
+
+async function addSite(e) {
+  e.preventDefault();
+  let url = $("add-site-url").value.trim();
+  if (!url) {
+    return;
+  }
+  let saved = await api.saveSite(url, $("add-site-name").value);
+  $("add-site").reset();
+  $("add-site").hidden = true;
+  renderSites(saved);
 }
 
 // --- Weather (Rejn) -----------------------------------------------------------------
@@ -214,10 +464,9 @@ function setupWeather() {
     theme: weatherTheme(),
     lang: weatherLang(),
     units,
-    // Under 230px tall Rejn switches to its one-row layout, which fits the
-    // corner (it needs at least 280px of width).
-    width: 300,
-    height: 150,
+    // Rejn's own one-row size. Smaller clips the card.
+    width: 340,
+    height: 170,
     onWeather: data => showWeatherLine(data, units),
   };
   if (weather) {
@@ -233,43 +482,22 @@ function setupWeather() {
 
 async function loadState() {
   state = await api.state().catch(() => null);
-  let actuent = !!state?.actuentEnabled;
-  $("actuent-search").hidden = !actuent;
-  $("query").placeholder = actuent
-    ? "Ask Actuent about places, prices, events… or search the web"
-    : "Search the web";
-  $("web-search").textContent = state?.engineName || "Web";
-  $("web-search").title = `Search ${state?.engineName || "the web"} (Shift+Enter)`;
-  if (!actuent) {
-    clearResults();
-  }
+  $("query").placeholder = state?.actuentEnabled
+    ? `Search ${state.engineName || "the web"}, or find places, prices and events`
+    : `Search ${state?.engineName || "the web"} or enter address`;
   setupWeather();
 }
 
 if (api) {
   $("greeting").textContent = greeting();
 
-  $("search").addEventListener("submit", e => {
-    e.preventDefault();
-    clearTimeout(liveTimer);
-    let query = $("query").value;
-    if (state?.actuentEnabled) {
-      actuentSearch(query);
-    } else {
-      webSearch(query);
-    }
-  });
-  $("query").addEventListener("keydown", e => {
-    if (e.key == "Enter" && e.shiftKey) {
-      e.preventDefault();
-      webSearch($("query").value);
-    } else if (e.key == "Escape") {
-      $("query").value = "";
-      clearResults();
-    }
-  });
+  $("search").addEventListener("submit", e => e.preventDefault());
   $("query").addEventListener("input", onInput);
-  $("web-search").addEventListener("click", () => webSearch($("query").value));
+  $("query").addEventListener("keydown", onKeyDown);
+  $("query").addEventListener("focus", renderSuggestions);
+  $("query").addEventListener("blur", renderSuggestions);
+  // Clicking a suggestion mustn't blur the box (and close the list) first.
+  $("suggest").addEventListener("mousedown", e => e.preventDefault());
   handleLinks(document, openLink);
 
   // Settings may have changed while this tab sat in the background.
@@ -282,8 +510,14 @@ if (api) {
     weather?.update({ theme: weatherTheme() })
   );
 
+  $("add-site").addEventListener("submit", addSite);
+  $("add-site-cancel").addEventListener("click", () => {
+    $("add-site").reset();
+    $("add-site").hidden = true;
+  });
+
   loadState();
-  loadTopSites();
+  renderSites();
   // No autofocus here: a new tab focuses the address bar, and grabbing focus
   // back mid-typing is what made keystrokes jump between the two boxes.
 }

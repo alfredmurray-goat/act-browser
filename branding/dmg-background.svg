@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 660 400" width="1320" height="800">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#2a1f4d"/>
+      <stop offset="1" stop-color="#140f24"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.2" cy="0" r="0.9">
+      <stop offset="0" stop-color="#8b6cf0" stop-opacity="0.45"/>
+      <stop offset="1" stop-color="#8b6cf0" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glow2" cx="1" cy="1" r="0.8">
+      <stop offset="0" stop-color="#4b2fc9" stop-opacity="0.4"/>
+      <stop offset="1" stop-color="#4b2fc9" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="660" height="400" fill="url(#bg)"/>
+  <rect width="660" height="400" fill="url(#glow)"/>
+  <rect width="660" height="400" fill="url(#glow2)"/>
+  <!-- Arrow from the app (180,190) to Applications (480,190) -->
+  <path d="M262 190 H385" stroke="#ffffff" stroke-opacity="0.55" stroke-width="5" stroke-linecap="round" stroke-dasharray="2 14"/>
+  <path d="M378 176 L398 190 L378 204" fill="none" stroke="#ffffff" stroke-opacity="0.7" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="330" y="338" text-anchor="middle" font-family="-apple-system, Helvetica Neue, sans-serif" font-size="17" font-weight="600" fill="#ffffff" fill-opacity="0.9">Drag Act Browser to Applications</text>
+  <text x="330" y="362" text-anchor="middle" font-family="-apple-system, Helvetica Neue, sans-serif" font-size="12" fill="#ffffff" fill-opacity="0.55">It keeps itself up to date after that</text>
+</svg>

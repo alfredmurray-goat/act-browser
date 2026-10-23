@@ -36,6 +36,8 @@ async function faviconFor(url) {
 }
 
 const PAGE_URL = "resource://act-page/newtab/";
+const SAVED_PREF = "act.newtab.savedSites";
+const MAX_SAVED = 24;
 
 export class ActNewTabParent extends JSWindowActorParent {
   async receiveMessage({ name, data: args }) {
@@ -55,6 +57,12 @@ export class ActNewTabParent extends JSWindowActorParent {
         return this.#webSearchUrl(String(args[0] ?? ""));
       case "ActNewTab:openInBackground":
         return this.#openInBackground(String(args[0] ?? ""));
+      case "ActNewTab:savedSites":
+        return this.#withIcons(this.#savedSites());
+      case "ActNewTab:saveSite":
+        return this.#saveSite(String(args[0] ?? ""), String(args[1] ?? ""));
+      case "ActNewTab:removeSite":
+        return this.#removeSite(String(args[0] ?? ""));
     }
     return null;
   }
@@ -120,6 +128,44 @@ export class ActNewTabParent extends JSWindowActorParent {
     }
     let engine = await lazy.SearchService.getDefault();
     return engine.getSubmission(query).uri.spec;
+  }
+
+  // Saved sites on the start page, kept in a pref so they survive updates
+  // and come along with the profile.
+  #savedSites() {
+    try {
+      let list = JSON.parse(Services.prefs.getStringPref(SAVED_PREF, "[]"));
+      return Array.isArray(list)
+        ? list.filter(site => isWebUrl(site?.url)).slice(0, MAX_SAVED)
+        : [];
+    } catch {
+      return [];
+    }
+  }
+
+  async #saveSite(url, title) {
+    try {
+      url = new URL(/^[a-z]+:/i.test(url) ? url : `https://${url}`).href;
+    } catch {
+      return this.#savedSites();
+    }
+    if (!isWebUrl(url)) {
+      return this.#savedSites();
+    }
+    let list = this.#savedSites().filter(site => site.url != url);
+    list.push({ url, title: title.trim().slice(0, 60) || new URL(url).hostname.replace(/^www\./, "") });
+    Services.prefs.setStringPref(SAVED_PREF, JSON.stringify(list.slice(-MAX_SAVED)));
+    return this.#withIcons(this.#savedSites());
+  }
+
+  async #removeSite(url) {
+    let list = this.#savedSites().filter(site => site.url != url);
+    Services.prefs.setStringPref(SAVED_PREF, JSON.stringify(list));
+    return this.#withIcons(list);
+  }
+
+  #withIcons(sites) {
+    return Promise.all(sites.map(async site => ({ ...site, icon: await faviconFor(site.url) })));
   }
 
   #openInBackground(url) {

@@ -1,17 +1,25 @@
-# Builds Act Browser and publishes a GitHub release when a version tag is
-# pushed:
+# Builds Act Browser for macOS, Windows and Linux, starts each build to check
+# it works, and on a version tag publishes a GitHub release with everything:
 #
-#   npm version 0.3.0 --no-git-tag-version   (or edit package.json)
-#   git commit -am "Act Browser 0.3.0" && git tag v0.3.0 && git push --tags
+#   macOS    .dmg (drag to Applications)        + .zip/.sig for updates
+#   Windows  -setup.exe (installer)             + .zip/.sig for updates
+#   Linux    .deb, .tar.xz                      + .tar.xz.sig for updates
+#
+# To release:
+#
+#   npm version 0.4.0 --no-git-tag-version
+#   git commit -am "Act Browser 0.4.0" && git tag v0.4.0 && git push && git push --tags
 #
 # Installed copies find the release, check its signature and update
-# themselves. Needs the ACT_UPDATE_KEY secret (see scripts/keygen.mjs).
+# themselves. Signing needs the ACT_UPDATE_KEY secret (see scripts/keygen.mjs).
 
-name: Release
+name: Build
 
 on:
   push:
     tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -19,9 +27,13 @@ permissions:
 jobs:
   build:
     strategy:
+      fail-fast: false
       matrix:
-        os: [macos-latest, ubuntu-latest]
+        os: [macos-latest, windows-latest, ubuntu-latest]
     runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
     steps:
       - uses: actions/checkout@v4
 
@@ -30,6 +42,7 @@ jobs:
           node-version: 22
 
       - name: Tag matches package.json
+        if: startsWith(github.ref, 'refs/tags/v')
         run: |
           version=$(node -p "require('./package.json').version")
           if [ "v$version" != "$GITHUB_REF_NAME" ]; then
@@ -37,28 +50,49 @@ jobs:
             exit 1
           fi
 
+      - uses: actions/setup-python@v5
+        if: runner.os == 'macOS'
+        with:
+          python-version: "3.12"
+
+      - name: Install dmgbuild
+        if: runner.os == 'macOS'
+        run: python3 -m pip install dmgbuild
+
+      - name: Install Inno Setup
+        if: runner.os == 'Windows'
+        run: |
+          if [ ! -f "/c/Program Files (x86)/Inno Setup 6/ISCC.exe" ]; then
+            choco install innosetup -y --no-progress
+          fi
+
       - name: Build and package
         env:
           ACT_UPDATE_KEY: ${{ secrets.ACT_UPDATE_KEY }}
         run: |
-          if [ -z "$ACT_UPDATE_KEY" ]; then
+          if [ -z "$ACT_UPDATE_KEY" ] && [[ "$GITHUB_REF" == refs/tags/v* ]]; then
             echo "ACT_UPDATE_KEY isn't set, installed browsers would refuse this update."
             exit 1
           fi
           npm run package
 
+      - name: Start it and check it works
+        run: npm run smoke
+
       - uses: actions/upload-artifact@v4
         with:
-          name: act-browser-${{ matrix.os }}
+          name: act-browser-${{ runner.os }}
           path: |
             dist/*.dmg
             dist/*.zip
-            dist/*.zip.sig
+            dist/*.sig
             dist/*.tar.xz
-            dist/*.tar.xz.sig
+            dist/*.deb
+            dist/*-setup.exe
           if-no-files-found: error
 
   release:
+    if: startsWith(github.ref, 'refs/tags/v')
     needs: build
     runs-on: ubuntu-latest
     steps:

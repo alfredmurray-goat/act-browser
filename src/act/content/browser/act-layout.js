@@ -20,6 +20,8 @@ var ActLayout = {
 
   init() {
     this._buildHeader();
+    this._buildFooter();
+    this._hideSidebarTools();
 
     this.hotzone = document.createXULElement("box");
     this.hotzone.id = "act-hotzone";
@@ -32,18 +34,78 @@ var ActLayout = {
   },
 
   // Top of the sidebar: an empty, draggable row where macOS puts the window
-  // buttons, then the workspace name.
+  // buttons, then the workspace name with the workspace switcher next to it
+  // (act-workspaces.js adds that).
   _buildHeader() {
     let header = document.createXULElement("vbox");
     header.id = "act-sidebar-header";
     let titlebar = document.createXULElement("box");
     titlebar.id = "act-sidebar-titlebar";
+    let row = document.createXULElement("hbox");
+    row.id = "act-sidebar-titlerow";
+    row.setAttribute("align", "center");
     let title = document.createXULElement("label");
     title.id = "act-workspace-title";
     title.setAttribute("crop", "end");
     title.setAttribute("context", "act-workspace-menu");
-    header.append(titlebar, title);
+    row.append(title);
+    header.append(titlebar, row);
     document.getElementById("sidebar-container").prepend(header);
+  },
+
+  // Bottom of the sidebar: settings, bookmarks and history, then downloads
+  // (act-extensions.js). Extension icons stack up from its right end.
+  _buildFooter() {
+    let footer = document.createXULElement("hbox");
+    footer.id = "act-sidebar-footer";
+    footer.setAttribute("align", "center");
+
+    let button = (id, label, icon, onCommand) => {
+      let b = document.createXULElement("toolbarbutton");
+      b.id = id;
+      b.className = "toolbarbutton-1 act-sidebar-tool";
+      b.setAttribute("tooltiptext", label);
+      b.setAttribute("aria-label", label);
+      b.setAttribute("image", icon);
+      b.addEventListener("command", onCommand);
+      return b;
+    };
+    footer.append(
+      button("act-tool-settings", "Settings", "chrome://global/skin/icons/settings.svg", () =>
+        openPreferences()
+      ),
+      button(
+        "act-tool-bookmarks",
+        "Saved sites (bookmarks)",
+        "chrome://browser/skin/bookmark-hollow.svg",
+        () => SidebarController.toggle("viewBookmarksSidebar")
+      ),
+      button("act-tool-history", "History", "chrome://browser/skin/history.svg", () =>
+        SidebarController.toggle("viewHistorySidebar")
+      )
+    );
+    document.getElementById("sidebar-container").append(footer);
+  },
+
+  // Firefox's own sidebar puts bookmarks, history and a settings button
+  // under the tabs. Zen doesn't, and with our footer it's one row too many.
+  // They're inside the sidebar's shadow DOM, so the CSS has to go in there.
+  _hideSidebarTools() {
+    let main = document.querySelector("sidebar-main");
+    let root = main?.shadowRoot;
+    if (!root) {
+      // Not rendered yet.
+      setTimeout(() => this._hideSidebarTools(), 200);
+      return;
+    }
+    let sheet = new CSSStyleSheet();
+    sheet.replaceSync(`
+      :host(:not([act-show-tools])) .buttons-wrapper,
+      :host(:not([act-show-tools])) .wrapper > splitter {
+        display: none !important;
+      }
+    `);
+    root.adoptedStyleSheets = [...root.adoptedStyleSheets, sheet];
   },
 
   uninit() {

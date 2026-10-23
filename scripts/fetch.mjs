@@ -8,7 +8,9 @@ import { Readable } from "node:stream";
 import {
   CACHE,
   firefox,
+  isMac,
   isMain,
+  isWindows,
   log,
   platform,
   requirePlatform,
@@ -40,7 +42,7 @@ export async function fetchFirefox() {
   rm(target);
   fs.mkdirSync(target, { recursive: true });
 
-  if (platform == "mac") {
+  if (isMac) {
     let mount = path.join(CACHE, "mnt");
     rm(mount);
     run("hdiutil", ["attach", "-nobrowse", "-readonly", "-mountpoint", mount, firefox.archive], {
@@ -51,6 +53,9 @@ export async function fetchFirefox() {
     } finally {
       run("hdiutil", ["detach", mount, "-quiet"]);
     }
+  } else if (isWindows) {
+    // Gives core/ (the browser) next to the installer's own setup.exe.
+    run("7z", ["x", "-y", `-o${target}`, firefox.archive], { quiet: true });
   } else {
     run("tar", ["-xJf", firefox.archive, "-C", target]);
   }

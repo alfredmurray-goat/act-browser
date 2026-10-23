@@ -28,6 +28,7 @@ const WINDOW_SCRIPTS = [
   "chrome://act/content/browser/act-browser.js",
   "chrome://act/content/browser/act-layout.js",
   "chrome://act/content/browser/act-workspaces.js",
+  "chrome://act/content/browser/act-tabgroups.js",
   "chrome://act/content/browser/act-extensions.js",
   "chrome://act/content/browser/act-popup.js",
   "chrome://act/content/browser/act-site-actions.js",
@@ -207,14 +208,14 @@ export const ActStartup = {
   // can be put back with Customize Toolbar.
   _tidyToolbar() {
     const VERSION_PREF = "act.layout.toolbarVersion";
-    const VERSION = 3;
+    const VERSION = 4;
     let done = Services.prefs.getIntPref(VERSION_PREF, 0);
     if (done >= VERSION) {
       return;
     }
     let { CustomizableUI } = lazy;
-    // v3: downloads get a permanent spot at the bottom of the sidebar.
-    CustomizableUI.addWidgetToArea("downloads-button", lazy.ActExtensions.AREA, 0);
+    // v4: downloads get a permanent spot in the sidebar's bottom row.
+    CustomizableUI.addWidgetToArea("downloads-button", lazy.ActExtensions.TOOLS_AREA);
     if (done >= 2) {
       Services.prefs.setIntPref(VERSION_PREF, VERSION);
       return;

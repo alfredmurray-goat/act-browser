@@ -2,12 +2,13 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-// A row at the bottom of the tab sidebar for downloads and extension
-// buttons, Zen style, instead of the puzzle piece menu.
+// The bottom of the tab sidebar is a mirrored L: a row of tools along the
+// bottom (settings, bookmarks, history, downloads) and extension buttons
+// stacked up the right hand side, instead of the puzzle piece menu.
 //
-// The row is a real CustomizableUI toolbar area, so the buttons are the
-// actual extension widgets: popups, badges and context menus all work like
-// they do anywhere else in Firefox.
+// Both are real CustomizableUI toolbar areas, so the buttons are the actual
+// widgets: popups, badges and context menus all work like anywhere else in
+// Firefox.
 
 import { ActPrefs, PREF, watchPrefs } from "resource://act/ActPrefs.sys.mjs";
 
@@ -18,6 +19,9 @@ ChromeUtils.defineESModuleGetters(lazy, {
 });
 
 export const AREA = "act-extensions-bar";
+// The bottom row. Only downloads lives here as a widget, the other tools
+// are plain buttons (act-layout.js).
+export const TOOLS_AREA = "act-sidebar-tools";
 
 let registered = false;
 
@@ -66,6 +70,7 @@ const listener = {
 
 export const ActExtensions = {
   AREA,
+  TOOLS_AREA,
 
   register() {
     if (registered) {
@@ -75,6 +80,11 @@ export const ActExtensions = {
     lazy.CustomizableUI.registerArea(AREA, {
       type: lazy.CustomizableUI.TYPE_TOOLBAR,
       defaultPlacements: [],
+      defaultCollapsed: false,
+    });
+    lazy.CustomizableUI.registerArea(TOOLS_AREA, {
+      type: lazy.CustomizableUI.TYPE_TOOLBAR,
+      defaultPlacements: ["downloads-button"],
       defaultCollapsed: false,
     });
     lazy.CustomizableUI.addListener(listener);
@@ -91,17 +101,18 @@ export const ActExtensions = {
   },
 
   /**
-   * Creates the toolbar for one browser window.
+   * Creates one of the two toolbars for a browser window.
    */
-  createToolbar(doc) {
+  createToolbar(doc, area = AREA) {
     let toolbar = doc.createXULElement("toolbar");
-    toolbar.id = AREA;
+    toolbar.id = area;
     toolbar.className = "browser-toolbar";
     toolbar.setAttribute("customizable", "true");
     toolbar.setAttribute("mode", "icons");
     toolbar.setAttribute("context", "toolbar-context-menu");
-    toolbar.setAttribute("toolbarname", "Sidebar extensions");
-    toolbar.setAttribute("aria-label", "Extensions");
+    let name = area == AREA ? "Extensions" : "Sidebar tools";
+    toolbar.setAttribute("toolbarname", name);
+    toolbar.setAttribute("aria-label", name);
     return toolbar;
   },
 };

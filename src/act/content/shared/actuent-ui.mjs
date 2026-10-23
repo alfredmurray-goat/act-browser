@@ -20,7 +20,7 @@ export function el(tag, className, text) {
   return node;
 }
 
-function formatPrice(price, currency) {
+export function formatPrice(price, currency) {
   if (price == null) {
     return "";
   }
@@ -34,7 +34,7 @@ function formatPrice(price, currency) {
   }
 }
 
-function formatDate(iso) {
+export function formatDate(iso) {
   let date = new Date(iso);
   if (isNaN(date)) {
     return "";
