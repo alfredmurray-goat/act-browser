@@ -5,17 +5,23 @@
 // The Act toolbar popup: Actuent search and Act settings.
 
 import {
-  Actuent,
-  browserWindow,
   handleLinks,
   renderResults,
 } from "chrome://act/content/shared/actuent-ui.mjs";
 
+const { Actuent } = ChromeUtils.importESModule(
+  "resource://act/Actuent.sys.mjs"
+);
+
 const { ActPrefs, watchPrefs } = ChromeUtils.importESModule(
   "resource://act/ActPrefs.sys.mjs"
 );
+const { ActAgents } = ChromeUtils.importESModule(
+  "resource://act/ActAgents.sys.mjs"
+);
 
-const win = browserWindow();
+// The browser window this popup belongs to.
+const win = window.browsingContext.topChromeWindow;
 const $ = id => document.getElementById(id);
 
 let currentView = "explore";
@@ -87,6 +93,7 @@ async function search(query) {
   $("status").textContent = renderResults($("results"), result, {
     openLink,
     onSearch: search,
+    favicon: domain => `page-icon:https://${domain}/`,
   });
   $("results").scrollTop = 0;
 }
@@ -99,6 +106,24 @@ function loadSettings() {
   }
   $("compact-toggle").checked = ActPrefs.compactMode;
   $("version").textContent = `built on Firefox ${Services.appinfo.version}`;
+
+  let agents = ActPrefs.agentsEnabled;
+  $("agent-setup").hidden = !agents;
+  $("agent-status").textContent = agents
+    ? `Listening on localhost:${ActPrefs.agentsPort}. Paste the command in a terminal, then restart your agent.`
+    : "";
+}
+
+function copyCommand(command) {
+  Cc["@mozilla.org/widget/clipboardhelper;1"]
+    .getService(Ci.nsIClipboardHelper)
+    .copyString(command);
+  $("agent-status").textContent = "Copied. Paste it in a terminal.";
+}
+
+function agentCommand(cli) {
+  let path = ActAgents.serverPath;
+  return `${cli} mcp add act-browser -- node "${path}"`;
 }
 
 // --- Wiring --------------------------------------------------------------------
@@ -124,6 +149,8 @@ for (let input of document.querySelectorAll("[data-pref]")) {
     Services.prefs.setBoolPref(input.dataset.pref, input.checked);
   });
 }
+$("copy-claude").addEventListener("click", () => copyCommand(agentCommand("claude")));
+$("copy-codex").addEventListener("click", () => copyCommand(agentCommand("codex")));
 $("compact-toggle").addEventListener("change", e => {
   win.ActBrowser.setCompactMode(e.target.checked);
 });
@@ -137,6 +164,7 @@ let unwatch = watchPrefs(
     "act.layout.sidebarToolbar",
     "act.extensions.inSidebar",
     "act.newtab.enabled",
+    "act.agents.enabled",
     "sidebar.verticalTabs",
   ],
   () => showView(currentView == "off" ? "explore" : currentView)

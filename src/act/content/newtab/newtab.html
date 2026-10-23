@@ -6,29 +6,38 @@
 <head>
   <meta charset="utf-8">
   <meta http-equiv="Content-Security-Policy"
-        content="default-src chrome:; img-src chrome: https: data: page-icon: moz-icon:; style-src chrome: 'unsafe-inline'">
+        content="default-src 'self'; img-src 'self' data:; frame-src https://rejn.app https://www.rejn.app; style-src 'self' 'unsafe-inline'; script-src 'self'">
+  <meta name="referrer" content="no-referrer">
   <title>New Tab</title>
-  <link rel="icon" href="chrome://act/content/icons/act.svg">
-  <link rel="stylesheet" href="chrome://act/content/shared/act.css">
-  <link rel="stylesheet" href="chrome://act/content/newtab/newtab.css">
-  <script type="module" src="chrome://act/content/newtab/newtab.mjs"></script>
+  <link rel="icon" href="../icons/logo-64.png">
+  <link rel="stylesheet" href="../shared/act.css">
+  <link rel="stylesheet" href="newtab.css">
+  <script type="module" src="newtab.mjs"></script>
 </head>
 <body>
+  <!-- Top right, where Firefox's own new tab puts its weather. -->
+  <aside id="weather" hidden></aside>
+
   <main>
     <div id="hero">
-      <img class="logo" src="chrome://act/content/icons/act.svg" alt="">
-      <h1 id="greeting"></h1>
+      <img class="logo" src="../icons/logo-192.png" alt="">
+      <div>
+        <h1 id="greeting"></h1>
+        <p id="weather-line" hidden></p>
+      </div>
     </div>
 
-    <form id="search">
-      <input id="query" type="search" autocomplete="off" spellcheck="false">
+    <form id="search" role="search">
+      <input id="query" type="search" autocomplete="off" spellcheck="false" aria-label="Search">
       <button type="submit" id="actuent-search" title="Search Actuent (Enter)">Actuent</button>
       <button type="button" id="web-search" title="Search the web (Shift+Enter)"></button>
     </form>
-    <div id="status" class="status"></div>
+    <div id="status" class="status" aria-live="polite"></div>
     <div id="results"></div>
 
-    <nav id="top-sites" aria-label="Top sites"></nav>
+    <div id="below">
+      <nav id="top-sites" aria-label="Top sites"></nav>
+    </div>
   </main>
   <footer id="credit" hidden>Live results from <a href="https://actuent.ai">Actuent</a></footer>
 </body>

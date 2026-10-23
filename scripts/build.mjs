@@ -12,6 +12,7 @@ import {
   BRANDING,
   CACHE,
   DIST,
+  ROOT,
   SRC,
   appLayout,
   config,
@@ -34,6 +35,9 @@ const INSTALL = [
   ["distribution/policies.json", "distribution/policies.json"],
   ["act", "act"],
 ];
+
+// The MCP server for AI agents ships next to the browser code.
+const AGENT = ["agent/act-mcp.mjs", "agent/act-mcp.mjs"];
 
 const BRAND_FILES = {
   "localization/en-US/branding/brand.ftl": "brand.ftl",
@@ -81,6 +85,9 @@ function installActFiles(resources) {
     rm(target);
     copy(path.join(SRC, from), target);
   }
+  let agentTarget = path.join(resources, AGENT[1]);
+  rm(agentTarget);
+  copy(path.join(ROOT, AGENT[0]), agentTarget);
 }
 
 // The brand name and logos live inside browser/omni.ja, which is a zip.
@@ -113,6 +120,9 @@ function rebrandMac(layout) {
   set("CFBundleDisplayName", config.name);
   set("CFBundleIdentifier", config.id);
   set("CFBundleIconFile", "act.icns");
+  // CFBundleIconName points at Firefox's icon in Assets.car, and macOS
+  // prefers that over CFBundleIconFile. Without it, our act.icns is used.
+  run("plutil", ["-remove", "CFBundleIconName", plist], { okCodes: [0, 1], quiet: true });
   run("plutil", ["-remove", "SMPrivilegedExecutables", plist], { okCodes: [0, 1], quiet: true });
 
   // "Firefox needs access to your Downloads folder..." and friends.
@@ -127,7 +137,20 @@ function rebrandMac(layout) {
     path.join(layout.resources, "en.lproj", "InfoPlist.strings"),
     `CFBundleName = "${config.name}";\nCFBundleDisplayName = "${config.name}";\n`
   );
-  fs.copyFileSync(path.join(BRANDING, "icons", "act.icns"), path.join(layout.resources, "act.icns"));
+  let icns = path.join(BRANDING, "icons", "act.icns");
+  fs.copyFileSync(icns, path.join(layout.resources, "act.icns"));
+  // Anything still asking for Firefox's icon by name gets ours too.
+  fs.copyFileSync(icns, path.join(layout.resources, "firefox.icns"));
+}
+
+// macOS caches app icons. Re-register the app so the Dock and Finder pick
+// up the new one.
+function refreshIconCache(app) {
+  let lsregister =
+    "/System/Library/Frameworks/CoreServices.framework/Frameworks/" +
+    "LaunchServices.framework/Support/lsregister";
+  run("touch", [app]);
+  run(lsregister, ["-f", app], { okCodes: [0, 1], quiet: true });
 }
 
 function rebrandLinux(layout) {
@@ -169,7 +192,9 @@ export async function build({ outDir = DIST } = {}) {
   rm(layout.app);
   fs.mkdirSync(outDir, { recursive: true });
   if (platform == "mac") {
-    run("ditto", [source, layout.app]);
+    // APFS clones: the copy shares disk space with the cached Firefox until
+    // a file changes, so a build costs a lot less than a full copy.
+    run("cp", ["-cR", source, layout.app]);
   } else {
     copy(source, layout.app);
   }
@@ -183,6 +208,7 @@ export async function build({ outDir = DIST } = {}) {
     log("Signing (ad hoc)…");
     run("xattr", ["-cr", layout.app]);
     run("codesign", ["--force", "--deep", "--sign", "-", layout.app], { quiet: true });
+    refreshIconCache(layout.app);
   } else {
     rebrandLinux(layout);
   }

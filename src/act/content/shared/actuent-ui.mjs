@@ -2,24 +2,12 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-// Renders Actuent search results. Shared by the toolbar popup and the new
-// tab page.
+// Renders Actuent search results. Shared by the toolbar popup (a chrome
+// page) and the new tab page (plain web content), so nothing in here may
+// rely on privileges.
 //
-// Both pages run with chrome privileges and show text from the network, so
-// everything here is built with createElement/textContent, never innerHTML.
-
-const { Actuent } = ChromeUtils.importESModule(
-  "resource://act/Actuent.sys.mjs"
-);
-
-export { Actuent };
-
-/**
- * The browser window a page in it belongs to.
- */
-export function browserWindow() {
-  return window.browsingContext.topChromeWindow;
-}
+// Everything is built with createElement/textContent, never innerHTML: the
+// text comes from the network.
 
 export function el(tag, className, text) {
   let node = document.createElement(tag);
@@ -71,10 +59,15 @@ function linkCard(url, className) {
 function siteCard(site, options) {
   let card = linkCard(site.url, "result site");
   let top = el("div", "result-top");
-  let icon = el("img", "favicon");
-  icon.src = `page-icon:https://${site.domain}/`;
-  icon.alt = "";
-  top.append(icon, el("span", "result-title", site.name));
+  let iconUrl = options.favicon?.(site.domain);
+  if (iconUrl) {
+    let icon = el("img", "favicon");
+    icon.src = iconUrl;
+    icon.alt = "";
+    icon.addEventListener("error", () => icon.remove(), { once: true });
+    top.append(icon);
+  }
+  top.append(el("span", "result-title", site.name));
   if (site.openNow === true) {
     top.append(el("span", "badge open", "Open"));
   } else if (site.openNow === false) {
@@ -141,6 +134,7 @@ function group(title, nodes) {
  * @param {object} options
  * @param {Function} options.openLink   opens a url in a tab
  * @param {Function} options.onSearch   runs a new search (related queries)
+ * @param {Function} [options.favicon]  domain -> icon url, or nothing
  * @returns {string} a status line for the caller to show, or ""
  */
 export function renderResults(container, result, options) {

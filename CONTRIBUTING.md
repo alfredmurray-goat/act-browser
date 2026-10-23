@@ -22,9 +22,12 @@ browser window.
 - Follow the Firefox style: 2 spaces, double quotes, `let` over `const`
   unless it's a real constant, braces on every `if`.
 - Every file starts with the MPL header.
-- Anything that comes from the network is untrusted. The popup and the new
-  tab page run with chrome privileges, so build DOM with `textContent` and
-  `createElement`, never `innerHTML`, and only open `http(s)` links.
+- Anything that comes from the network is untrusted. The popup runs with
+  chrome privileges, so build DOM with `textContent` and `createElement`,
+  never `innerHTML`, and only open `http(s)` links. The new tab page is
+  plain web content on purpose (it embeds third-party widgets): give it new
+  abilities through `ActNewTab` in `modules/actors/`, never by making it
+  privileged.
 - Every feature has to respect its pref. If `act.actuent.enabled` is off,
   nothing talks to Actuent.
 - Prefer Firefox's own pieces (vertical tabs, `hideTab`, CustomizableUI

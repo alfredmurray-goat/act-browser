@@ -2,11 +2,12 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-// The Zen-ish layout: the toolbar (address bar, back/forward...) sits on top
-// of the tab sidebar instead of across the window, so the page gets the full
-// height. Most of it is CSS in act-browser.css, keyed on [act-sidebar-toolbar].
-// This file feeds the CSS the sizes it can't know: how wide the sidebar is
-// and how tall the toolbar ends up once it wraps.
+// The Zen-ish layout. By default the tab sidebar runs to the top of the
+// window and the toolbar sits above the page only; with
+// act.layout.sidebarToolbar the toolbar moves into the sidebar instead. Most
+// of it is CSS in act-browser.css. This file adds the sidebar header and
+// feeds the CSS the sizes it can't know: how wide the sidebar is and how
+// tall the toolbar is.
 //
 // It also adds the hover strip on the window edge that brings the sidebar
 // back in compact mode.
@@ -18,6 +19,8 @@ var ActLayout = {
   hotzone: null,
 
   init() {
+    this._buildHeader();
+
     this.hotzone = document.createXULElement("box");
     this.hotzone.id = "act-hotzone";
     document.getElementById("browser").append(this.hotzone);
@@ -26,6 +29,21 @@ var ActLayout = {
     this._observer.observe(document.getElementById("sidebar-container"));
     this._observer.observe(gNavToolbox);
     this.update();
+  },
+
+  // Top of the sidebar: an empty, draggable row where macOS puts the window
+  // buttons, then the workspace name.
+  _buildHeader() {
+    let header = document.createXULElement("vbox");
+    header.id = "act-sidebar-header";
+    let titlebar = document.createXULElement("box");
+    titlebar.id = "act-sidebar-titlebar";
+    let title = document.createXULElement("label");
+    title.id = "act-workspace-title";
+    title.setAttribute("crop", "end");
+    title.setAttribute("context", "act-workspace-menu");
+    header.append(titlebar, title);
+    document.getElementById("sidebar-container").prepend(header);
   },
 
   uninit() {

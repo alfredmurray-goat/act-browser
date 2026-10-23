@@ -2,44 +2,48 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-// The Act new tab page: a search box that asks Actuent (or the default
-// search engine) and the sites you visit most.
+// The Act new tab page: a search box that asks Actuent (live, as you type)
+// or the default search engine, the sites you visit most, and the weather.
+//
+// This page runs as normal web content. Whatever it needs from the browser
+// comes through window.ActNewTab (see modules/actors/ActNewTabChild).
 
-import {
-  Actuent,
-  browserWindow,
-  el,
-  handleLinks,
-  renderResults,
-} from "chrome://act/content/shared/actuent-ui.mjs";
-
-const { NewTabUtils } = ChromeUtils.importESModule(
-  "resource://gre/modules/NewTabUtils.sys.mjs"
-);
-const { SearchService } = ChromeUtils.importESModule(
-  "moz-src:///toolkit/components/search/SearchService.sys.mjs"
-);
+import { el, handleLinks, renderResults } from "../shared/actuent-ui.mjs";
+import { createRejnWeather } from "../shared/rejn-weather.mjs";
 
 const $ = id => document.getElementById(id);
-let searchAbort = null;
+const api = window.ActNewTab;
 
-function win() {
-  return browserWindow();
-}
+const LIVE_DELAY_MS = 300;
+const LIVE_MIN_CHARS = 3;
 
+let state = null;
+let searchTicket = 0;
+let liveTimer = null;
+let weather = null;
 
-function openLink(url, { background = false } = {}) {
-  if (background) {
-    win().ActBrowser.openLink(url, { background: true });
-    return;
-  }
-  // Navigate this tab, like a normal new tab page would.
+function isWebUrl(url) {
   try {
     let { protocol } = new URL(url);
-    if (protocol == "https:" || protocol == "http:") {
-      win().openWebLinkIn(url, "current");
-    }
-  } catch {}
+    return protocol == "https:" || protocol == "http:";
+  } catch {
+    return false;
+  }
+}
+
+function looksLikeUrl(text) {
+  return !/\s/.test(text) && /^[^\s/]+\.[a-z]{2,}(\/|$)/i.test(text);
+}
+
+function openLink(url, { background = false } = {}) {
+  if (!isWebUrl(url)) {
+    return;
+  }
+  if (background) {
+    api.openInBackground(url);
+  } else {
+    location.href = url;
+  }
 }
 
 function greeting() {
@@ -56,134 +60,230 @@ function greeting() {
   return "Good evening";
 }
 
+// --- Search ---------------------------------------------------------------------------
+
 async function webSearch(query) {
-  query = query.trim();
-  if (!query) {
-    return;
+  let url = await api.webSearchUrl(query);
+  if (url) {
+    location.href = url;
   }
-  let engine = await SearchService.getDefault();
-  openLink(engine.getSubmission(query).uri.spec);
 }
 
-async function actuentSearch(query) {
+async function actuentSearch(query, { live = false } = {}) {
   query = query.trim();
-  $("query").value = query;
   if (!query) {
     clearResults();
     return;
   }
-  document.body.classList.add("searching");
-  $("credit").hidden = false;
-
-  searchAbort?.abort();
-  let abort = (searchAbort = new AbortController());
-  $("status").textContent = "Searching…";
+  let ticket = ++searchTicket;
+  if (!live) {
+    $("status").textContent = "Searching…";
+  }
+  let result;
   try {
-    let result = await Actuent.search(query, { limit: 10, signal: abort.signal });
-    if (!abort.signal.aborted) {
-      $("status").textContent = renderResults($("results"), result, {
-        openLink,
-        onSearch: actuentSearch,
-      });
-    }
+    result = await api.search(query, { live });
   } catch (e) {
-    if (e.name != "AbortError") {
+    if (ticket == searchTicket && !live) {
       $("status").textContent = e.message;
     }
+    return;
   }
+  // Only the newest search gets to draw, and only while the box still says
+  // what we searched for.
+  if (ticket != searchTicket || $("query").value.trim() != query || !result) {
+    return;
+  }
+  document.body.classList.add("searching");
+  $("credit").hidden = false;
+  $("status").textContent = renderResults($("results"), result, {
+    openLink,
+    onSearch: related => {
+      $("query").value = related;
+      actuentSearch(related);
+    },
+  });
 }
 
 function clearResults() {
-  searchAbort?.abort();
+  searchTicket++;
+  clearTimeout(liveTimer);
   document.body.classList.remove("searching");
   $("results").replaceChildren();
   $("status").textContent = "";
   $("credit").hidden = true;
 }
 
-async function loadTopSites() {
-  let sites = [];
-  try {
-    sites = await NewTabUtils.activityStreamLinks.getTopSites({
-      numItems: 8,
-      onePerDomain: true,
-    });
-  } catch (e) {
-    console.warn("Act: couldn't load top sites", e);
+function onInput() {
+  clearTimeout(liveTimer);
+  let query = $("query").value.trim();
+  if (!query) {
+    clearResults();
+    return;
   }
-  let tiles = sites.slice(0, 8).map(site => {
+  if (!state?.actuentEnabled || query.length < LIVE_MIN_CHARS || looksLikeUrl(query)) {
+    return;
+  }
+  liveTimer = setTimeout(() => actuentSearch(query, { live: true }), LIVE_DELAY_MS);
+}
+
+// --- Top sites ----------------------------------------------------------------------
+
+async function loadTopSites() {
+  let sites = (await api.topSites().catch(() => null)) || [];
+  let tiles = sites.map(site => {
     let link = el("a");
     link.href = site.url;
+    link.title = site.title || site.url;
     let tile = el("div", "tile");
-    let icon = el("img");
-    icon.src = `page-icon:${site.url}`;
-    icon.alt = "";
-    tile.append(icon);
     let host = "";
     try {
       host = new URL(site.url).hostname.replace(/^www\./, "");
     } catch {}
-    link.title = site.title || site.url;
-    link.append(tile, el("span", null, site.title || host));
+    if (site.icon?.startsWith("data:")) {
+      let icon = el("img");
+      icon.src = site.icon;
+      icon.alt = "";
+      tile.append(icon);
+    } else {
+      tile.append(el("span", "letter", (host[0] || "?").toUpperCase()));
+    }
+    link.append(tile, el("span", "name", site.title || host));
     return link;
   });
   $("top-sites").replaceChildren(...tiles);
 }
 
-async function updateEngineLabel() {
-  let engine = await SearchService.getDefault();
-  $("web-search").textContent = engine.name;
-  $("web-search").title = `Search ${engine.name} (Shift+Enter)`;
+// --- Weather (Rejn) -----------------------------------------------------------------
+
+function weatherTheme() {
+  return matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 }
 
-function applyPrefs() {
-  let actuent = Services.prefs.getBoolPref("act.actuent.enabled", true);
+function pageLocale() {
+  return state?.locale || navigator.language || "en";
+}
+
+function weatherLang() {
+  return /^da\b/i.test(pageLocale()) ? "da" : "en";
+}
+
+function weatherUnits(pref) {
+  if (pref == "metric" || pref == "imperial") {
+    return pref;
+  }
+  return /^en-(US|LR|MM)$/i.test(pageLocale()) ? "imperial" : "metric";
+}
+
+// A line under the greeting, from the data Rejn posts. The widget itself,
+// with Rejn's credit, is on the same page.
+function showWeatherLine(data, units) {
+  let shown = data.shown || {};
+  if (typeof shown.tempC != "number") {
+    return;
+  }
+  let temp =
+    units == "imperial"
+      ? `${Math.round((shown.tempC * 9) / 5 + 32)}°F`
+      : `${Math.round(shown.tempC)}°`;
+  let parts = [temp];
+  if (shown.conditionText) {
+    parts.push(String(shown.conditionText).toLowerCase());
+  }
+  let place = data.place?.name;
+  $("weather-line").textContent = place
+    ? `${parts.join(", ")} in ${place}`
+    : parts.join(", ");
+  $("weather-line").hidden = false;
+}
+
+function setupWeather() {
+  let options = state?.weather;
+  let box = $("weather");
+  if (!options) {
+    weather?.destroy();
+    weather = null;
+    box.hidden = true;
+    $("weather-line").hidden = true;
+    return;
+  }
+  let units = weatherUnits(options.units);
+  let props = {
+    lat: options.lat || null,
+    lon: options.lon || null,
+    location: options.location || undefined,
+    theme: weatherTheme(),
+    lang: weatherLang(),
+    units,
+    // Under 230px tall Rejn switches to its one-row layout, which fits the
+    // corner (it needs at least 280px of width).
+    width: 300,
+    height: 150,
+    onWeather: data => showWeatherLine(data, units),
+  };
+  if (weather) {
+    weather.update(props);
+  } else {
+    weather = createRejnWeather(props);
+    box.append(weather.element);
+  }
+  box.hidden = false;
+}
+
+// --- State & wiring -----------------------------------------------------------------
+
+async function loadState() {
+  state = await api.state().catch(() => null);
+  let actuent = !!state?.actuentEnabled;
   $("actuent-search").hidden = !actuent;
   $("query").placeholder = actuent
     ? "Ask Actuent about places, prices, events… or search the web"
     : "Search the web";
+  $("web-search").textContent = state?.engineName || "Web";
+  $("web-search").title = `Search ${state?.engineName || "the web"} (Shift+Enter)`;
   if (!actuent) {
     clearResults();
   }
+  setupWeather();
 }
 
-$("greeting").textContent = greeting();
+if (api) {
+  $("greeting").textContent = greeting();
 
-$("search").addEventListener("submit", e => {
-  e.preventDefault();
-  let query = $("query").value;
-  if (Services.prefs.getBoolPref("act.actuent.enabled", true)) {
-    actuentSearch(query);
-  } else {
-    webSearch(query);
-  }
-});
-$("query").addEventListener("keydown", e => {
-  if (e.key == "Enter" && e.shiftKey) {
+  $("search").addEventListener("submit", e => {
     e.preventDefault();
-    webSearch($("query").value);
-  } else if (e.key == "Escape") {
-    $("query").value = "";
-    clearResults();
-  }
-});
-$("query").addEventListener("input", () => {
-  if (!$("query").value) {
-    clearResults();
-  }
-});
-$("web-search").addEventListener("click", () => webSearch($("query").value));
-handleLinks(document, openLink);
+    clearTimeout(liveTimer);
+    let query = $("query").value;
+    if (state?.actuentEnabled) {
+      actuentSearch(query);
+    } else {
+      webSearch(query);
+    }
+  });
+  $("query").addEventListener("keydown", e => {
+    if (e.key == "Enter" && e.shiftKey) {
+      e.preventDefault();
+      webSearch($("query").value);
+    } else if (e.key == "Escape") {
+      $("query").value = "";
+      clearResults();
+    }
+  });
+  $("query").addEventListener("input", onInput);
+  $("web-search").addEventListener("click", () => webSearch($("query").value));
+  handleLinks(document, openLink);
 
-let observer = () => applyPrefs();
-Services.prefs.addObserver("act.actuent.enabled", observer);
-window.addEventListener(
-  "unload",
-  () => Services.prefs.removeObserver("act.actuent.enabled", observer),
-  { once: true }
-);
+  // Settings may have changed while this tab sat in the background.
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState == "visible") {
+      loadState();
+    }
+  });
+  matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () =>
+    weather?.update({ theme: weatherTheme() })
+  );
 
-applyPrefs();
-updateEngineLabel();
-loadTopSites();
-$("query").focus();
+  loadState();
+  loadTopSites();
+  // No autofocus here: a new tab focuses the address bar, and grabbing focus
+  // back mid-typing is what made keystrokes jump between the two boxes.
+}

@@ -20,10 +20,8 @@ body {
   padding: 10px 10px 6px 14px;
 
   .logo {
-    width: 16px;
-    height: 16px;
-    -moz-context-properties: fill;
-    fill: var(--accent);
+    width: 18px;
+    height: 18px;
   }
 }
 
@@ -135,4 +133,8 @@ kbd {
   font-size: 0.85em;
   color: var(--muted);
   margin-inline-start: 4px;
+}
+
+.row.wrap {
+  flex-wrap: wrap;
 }

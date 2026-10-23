@@ -14,7 +14,7 @@
 </head>
 <body>
   <header id="topbar">
-    <img class="logo" src="chrome://act/content/icons/act.svg" alt="">
+    <img class="logo" src="chrome://act/content/icons/logo-64.png" alt="">
     <span id="heading">Explore</span>
     <button class="icon-button" id="toggle-settings" title="Settings">
       <img src="chrome://act/content/icons/settings.svg" alt="">
@@ -54,6 +54,18 @@
     <label class="switch"><input type="checkbox" data-pref="act.workspaces.enabled"><span>Workspaces</span></label>
     <label class="switch"><input type="checkbox" data-pref="act.extensions.inSidebar"><span>Extensions in the sidebar</span></label>
     <label class="switch"><input type="checkbox" data-pref="act.newtab.enabled"><span>Act new tab page</span></label>
+    <label class="switch"><input type="checkbox" data-pref="act.weather.enabled"><span>Weather on the new tab (Rejn)</span></label>
+    <label class="switch"><input type="checkbox" data-pref="act.weather.useMyLocation"><span>Weather for my location</span></label>
+    <p class="hint">Otherwise it shows the place in <code>act.weather.location</code> (set lat/lon next to it in about:config).</p>
+
+    <h2>AI agents</h2>
+    <label class="switch"><input type="checkbox" data-pref="act.agents.enabled"><span>Let AI agents control the browser</span></label>
+    <p class="hint">Claude Code, Codex and other MCP clients can open pages, read them, click and type. You'll see their cursor on the page. The first time an agent connects, Act Browser asks you to allow it. Tick "remember" to allow agents until you restart.</p>
+    <div id="agent-setup" class="row wrap" hidden>
+      <button id="copy-claude">Copy Claude Code setup</button>
+      <button id="copy-codex">Copy Codex setup</button>
+    </div>
+    <p id="agent-status" class="hint"></p>
 
     <p class="hint about">Act Browser · <span id="version"></span></p>
   </section>

@@ -345,12 +345,12 @@ var ActWorkspaces = {
     add.setAttribute("label", "+");
     add.setAttribute("tooltiptext", "New workspace");
 
-    let name = document.createXULElement("label");
-    name.id = "act-workspace-name";
-    name.setAttribute("crop", "end");
-    name.setAttribute("value", this.list.find(w => w.id == this.active)?.name);
+    this.strip.replaceChildren(...buttons, add);
 
-    this.strip.replaceChildren(name, ...buttons, add);
+    // The name shows as a heading at the top of the sidebar.
+    let title = document.getElementById("act-workspace-title");
+    let active = this.list.find(w => w.id == this.active);
+    title?.setAttribute("value", active?.name || "");
   },
 
   _buildMenus() {

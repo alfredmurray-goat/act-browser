@@ -2,8 +2,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-// Extension buttons live in a row at the bottom of the tab sidebar, Zen
-// style, instead of behind the puzzle piece menu.
+// A row at the bottom of the tab sidebar for downloads and extension
+// buttons, Zen style, instead of the puzzle piece menu.
 //
 // The row is a real CustomizableUI toolbar area, so the buttons are the
 // actual extension widgets: popups, badges and context menus all work like
@@ -50,7 +50,9 @@ function moveAllIn() {
 
 function moveAllOut() {
   for (let id of lazy.CustomizableUI.getWidgetIdsInArea(AREA)) {
-    lazy.CustomizableUI.addWidgetToArea(id, lazy.CustomizableUI.AREA_ADDONS);
+    if (isExtensionWidget(id)) {
+      lazy.CustomizableUI.addWidgetToArea(id, lazy.CustomizableUI.AREA_ADDONS);
+    }
   }
 }
 
