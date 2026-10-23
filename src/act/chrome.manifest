@@ -1,2 +1,5 @@
 content act content/
 resource act modules/
+# Pages that run as ordinary (unprivileged) web content, like the new tab
+# page. They get what they need from the browser through JSWindowActors.
+resource act-page content/

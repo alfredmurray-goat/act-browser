@@ -22,7 +22,7 @@ ChromeUtils.defineESModuleGetters(lazy, {
 });
 
 // Wait for the user to stop typing before asking Actuent anything.
-const DEBOUNCE_MS = 350;
+const DEBOUNCE_MS = 200;
 const MIN_CHARS = 4;
 
 function looksLikeUrl(text) {
@@ -33,7 +33,10 @@ function looksLikeUrl(text) {
 }
 
 class ActProviderActuent extends UrlbarProvider {
-  #controller = null;
+  // One AbortController per query. With a single shared one, cancelling the
+  // previous query (which Firefox can do after the next one started) aborted
+  // the request of the query the user was actually typing.
+  #controllers = new WeakMap();
 
   get name() {
     return "ActProviderActuent";
@@ -72,23 +75,27 @@ class ActProviderActuent extends UrlbarProvider {
     }
 
     let max = Math.max(1, Math.min(ActPrefs.actuentUrlbarMax, 6));
-    this.#controller = new AbortController();
+    let controller = new AbortController();
+    this.#controllers.set(queryContext, controller);
     let result;
     try {
       result = await Actuent.search(queryContext.trimmedSearchString, {
         limit: max + 2,
-        background: true,
-        signal: this.#controller.signal,
+        priority: "typing",
+        signal: controller.signal,
       });
     } catch {
       // Offline, rate limited or cancelled. Either way, show nothing.
       return;
+    } finally {
+      this.#controllers.delete(queryContext);
     }
     if (instance != this.queryInstance) {
       return;
     }
 
     let { RESULT_TYPE, RESULT_SOURCE } = lazy.UrlbarShared;
+    let index = 0;
     for (let site of result.sites.slice(0, max)) {
       if (!site.homeUrl) {
         continue;
@@ -105,6 +112,10 @@ class ActProviderActuent extends UrlbarProvider {
         new lazy.UrlbarResult({
           type: RESULT_TYPE.URL,
           source: RESULT_SOURCE.OTHER_NETWORK,
+          // Fixed slots right under the first row. Without them, a profile
+          // with lots of history fills the list before these arrive and
+          // Actuent never shows up.
+          suggestedIndex: 1 + index++,
           payload: {
             url: site.homeUrl,
             title,
@@ -115,9 +126,9 @@ class ActProviderActuent extends UrlbarProvider {
     }
   }
 
-  cancelQuery() {
-    this.#controller?.abort();
-    this.#controller = null;
+  cancelQuery(queryContext) {
+    this.#controllers.get(queryContext)?.abort();
+    this.#controllers.delete(queryContext);
   }
 }
 

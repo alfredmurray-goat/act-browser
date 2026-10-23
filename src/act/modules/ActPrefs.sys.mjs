@@ -12,6 +12,8 @@ export const PREF = {
   sidebarToolbar: "act.layout.sidebarToolbar",
   extensionsInSidebar: "act.extensions.inSidebar",
   newtabEnabled: "act.newtab.enabled",
+  agentsEnabled: "act.agents.enabled",
+  agentsPort: "act.agents.port",
   workspacesEnabled: "act.workspaces.enabled",
   workspacesList: "act.workspaces.list",
 };
@@ -29,9 +31,11 @@ const defs = [
   ["actuentUrlbarMax", 3],
   ["actuentSiteActions", true],
   ["compactMode", false],
-  ["sidebarToolbar", true],
+  ["sidebarToolbar", false],
   ["extensionsInSidebar", true],
   ["newtabEnabled", true],
+  ["agentsEnabled", false],
+  ["agentsPort", 9222],
   ["workspacesEnabled", true],
   ["workspacesList", "[]"],
 ];
@@ -73,6 +77,10 @@ export function setActPref(name, value) {
  * Returns a function that removes the observers again.
  */
 export function watchPrefs(names, callback) {
+  if (names.some(name => !name)) {
+    // An empty name would watch every pref in the browser.
+    throw new Error("watchPrefs: missing pref name");
+  }
   let observer = (_subject, _topic, data) => callback(data);
   for (let name of names) {
     Services.prefs.addObserver(name, observer);

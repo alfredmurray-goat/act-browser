@@ -65,6 +65,7 @@ var ActBrowser = {
       ActPopup,
       ActSiteActions,
       ActContextMenu,
+      ActUploadMenu,
     ]) {
       try {
         part.init();
@@ -87,6 +88,7 @@ var ActBrowser = {
     let vertical = Services.prefs.getBoolPref("sidebar.verticalTabs", false);
     root.toggleAttribute("act-compact", this.prefs.compactMode);
     root.toggleAttribute("act-actuent", this.prefs.actuentEnabled);
+    root.toggleAttribute("act-vertical", vertical);
     root.toggleAttribute(
       "act-sidebar-toolbar",
       vertical && this.prefs.sidebarToolbar

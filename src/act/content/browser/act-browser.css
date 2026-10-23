@@ -29,6 +29,30 @@
   background-color: transparent;
 }
 
+/* On macOS the frame around the page is see-through, like Zen: the desktop
+   shows through, blurred (the same native material Firefox uses for its
+   title bar). Other platforms keep the solid color above. */
+@media (-moz-platform: macos) {
+  :root[customtitlebar]:not([lwtheme], [macOSNativeFullscreen]) {
+    #navigator-toolbox,
+    #sidebar-container {
+      background-color: transparent;
+    }
+
+    #browser {
+      background-color: transparent;
+      appearance: auto;
+      -moz-default-appearance: -moz-window-titlebar;
+    }
+
+    /* The compact sidebar floats over the page, so it needs its own. */
+    &[act-compact] #sidebar-container {
+      appearance: auto;
+      -moz-default-appearance: -moz-window-titlebar;
+    }
+  }
+}
+
 :root:not([inDOMFullscreen], [sizemode="fullscreen"]) {
   #tabbrowser-tabbox {
     padding: 0 var(--act-gap) var(--act-gap) 0;
@@ -79,8 +103,50 @@
   }
 }
 
-#vertical-tabs .tabbrowser-tab[selected] .tab-background {
-  box-shadow: var(--act-shadow);
+/* Zen style tabs: no outlines, a soft highlight for the current one. */
+#vertical-tabs .tabbrowser-tab {
+  .tab-background {
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+    background-image: none !important;
+    border-radius: 9px !important;
+  }
+
+  &:hover:not([selected]) .tab-background {
+    background-color: color-mix(in srgb, currentColor 8%, transparent) !important;
+  }
+
+  &[selected] .tab-background {
+    background-color: color-mix(in srgb, currentColor 15%, transparent) !important;
+  }
+}
+
+/* Title row at the top of the sidebar: room for the window buttons, and the
+   workspace name underneath, like Zen's "Space" heading. */
+#act-sidebar-header {
+  flex-direction: column;
+  -moz-window-dragging: drag;
+}
+
+#act-sidebar-titlebar {
+  height: var(--act-titlebar-height, 38px);
+}
+
+#act-workspace-title {
+  margin: 0 14px 4px !important;
+  font-weight: 600;
+  font-size: 1.05em;
+  opacity: 0.85;
+
+  :root:not([act-workspaces]) & {
+    display: none;
+  }
+}
+
+:root:is([act-sidebar-toolbar], [inDOMFullscreen], [customizing]) #act-sidebar-header,
+:root:not([act-vertical]) #act-sidebar-header {
+  display: none;
 }
 
 /* --- Act toolbar button ------------------------------------------------------- */
@@ -119,15 +185,6 @@
 
 :root:not([act-workspaces]) #act-workspaces {
   display: none;
-}
-
-#act-workspace-name {
-  flex: 1;
-  margin: 0 4px 0 2px !important;
-  font-weight: 600;
-  font-size: 0.9em;
-  opacity: 0.75;
-  min-width: 0;
 }
 
 .act-workspace {
@@ -375,6 +432,46 @@
   }
 }
 
+/* --- Toolbar above the page ------------------------------------------------- */
+
+/* The default, as in Zen: the sidebar runs all the way to the top of the
+   window (window buttons included) and the toolbar only spans the page. */
+:root[act-vertical]:not([act-sidebar-toolbar], [inDOMFullscreen], [customizing]) {
+  #navigator-toolbox {
+    position: absolute;
+    top: 0;
+    inset-inline-start: var(--act-sidebar-width, 270px);
+    inset-inline-end: 0;
+    z-index: 4;
+    overflow: visible;
+  }
+
+  #tabbrowser-tabbox {
+    padding-top: var(--act-toolbox-height, 44px);
+  }
+
+  #nav-bar {
+    padding-inline: 0 var(--act-gap);
+  }
+
+  /* macOS places its window buttons wherever this box is. Move it from the
+     toolbar to the top of the sidebar. */
+  #nav-bar .titlebar-buttonbox-container {
+    position: absolute;
+    inset-inline-start: calc(-1 * var(--act-sidebar-width, 270px) + 6px);
+    top: 0;
+    height: var(--act-titlebar-height, 38px);
+  }
+
+  #nav-bar :is(toolbarspring, #sidebar-button) {
+    display: none;
+  }
+
+  &[act-extensions-in-sidebar] #unified-extensions-button {
+    display: none;
+  }
+}
+
 /* --- Compact mode ----------------------------------------------------------- */
 
 #act-hotzone {
@@ -436,23 +533,36 @@
     }
   }
 
-  /* With the toolbar across the top, it tucks away upwards instead. */
+  /* With the toolbar above the page, it spans the window and tucks away
+     upwards. A thin strip at the top brings it back. */
   &:not([act-sidebar-toolbar]) {
     #navigator-toolbox {
-      position: relative;
+      position: absolute;
+      top: 0;
+      inset-inline: 0;
       z-index: 6;
-      min-height: 6px;
+      transform: translateY(calc(-100% + 6px));
+      opacity: 0;
+      transition: transform 160ms ease, opacity 120ms ease;
+    }
+
+    #navigator-toolbox:is(:hover, :focus-within),
+    &:has(#urlbar[open], #PanelUI-menu-button[open]) #navigator-toolbox {
+      transform: none;
+      opacity: 1;
+    }
+
+    #tabbrowser-tabbox {
+      padding-top: var(--act-gap);
+    }
+
+    #nav-bar .titlebar-buttonbox-container {
+      inset-inline-start: 6px;
     }
 
     #nav-bar {
-      margin-top: -48px;
-      opacity: 0;
-      transition: margin-top 160ms ease, opacity 120ms ease;
-    }
-
-    #navigator-toolbox:is(:hover, :focus-within) #nav-bar {
-      margin-top: 0;
-      opacity: 1;
+      padding-inline-start: 84px;
+      background-color: var(--act-chrome-bg) !important;
     }
   }
 }
@@ -469,10 +579,6 @@
 
   &:empty,
   &:not(:has(toolbarbutton, toolbaritem)) {
-    display: none;
-  }
-
-  :root:not([act-extensions-in-sidebar]) & {
     display: none;
   }
 

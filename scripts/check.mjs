@@ -18,7 +18,7 @@ function* walk(dir) {
 }
 
 let failed = 0;
-for (let dir of ["src", "scripts"]) {
+for (let dir of ["src", "scripts", "agent"]) {
   for (let file of walk(path.join(ROOT, dir))) {
     let source = fs.readFileSync(file, "utf8");
     let isModule = file.endsWith(".mjs");

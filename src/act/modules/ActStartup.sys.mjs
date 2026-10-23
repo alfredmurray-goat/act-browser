@@ -7,6 +7,7 @@ import { ActPrefs, PREF, watchPrefs } from "resource://act/ActPrefs.sys.mjs";
 const lazy = {};
 ChromeUtils.defineESModuleGetters(lazy, {
   AboutNewTab: "resource:///modules/AboutNewTab.sys.mjs",
+  ActAgents: "resource://act/ActAgents.sys.mjs",
   ActExtensions: "resource://act/ActExtensions.sys.mjs",
   ActUrlbar: "resource://act/ActUrlbar.sys.mjs",
   CustomizableUI:
@@ -14,7 +15,10 @@ ChromeUtils.defineESModuleGetters(lazy, {
 });
 
 const BROWSER_URL = "chrome://browser/content/browser.xhtml";
-export const NEWTAB_URL = "chrome://act/content/newtab/newtab.html";
+// Served as plain web content (see chrome.manifest), not with chrome
+// privileges, so the page can embed third-party widgets like the weather.
+export const NEWTAB_URL = "resource://act-page/newtab/newtab.html";
+const OLD_NEWTAB_URL = "chrome://act/content/newtab/newtab.html";
 
 // Loaded into every browser window, in this order. They share the window's
 // global scope, same as Firefox's own browser-*.js scripts.
@@ -26,6 +30,7 @@ const WINDOW_SCRIPTS = [
   "chrome://act/content/browser/act-popup.js",
   "chrome://act/content/browser/act-site-actions.js",
   "chrome://act/content/browser/act-context-menu.js",
+  "chrome://act/content/browser/act-upload.js",
 ];
 
 const WINDOW_STYLES = ["chrome://act/content/browser/act-browser.css"];
@@ -109,17 +114,11 @@ export const ActStartup = {
         label: "Act",
         tooltiptext: "Explore with Actuent (Ctrl+Alt+E)",
         onCommand(event) {
-          event.target.ownerGlobal.ActPopup?.toggle();
+          event.target.ownerDocument.defaultView.ActPopup?.toggle();
         },
       });
     } catch (e) {
       console.error("Act: couldn't create toolbar button", e);
-    }
-
-    try {
-      this._tidyToolbar();
-    } catch (e) {
-      console.error("Act: couldn't tidy the toolbar", e);
     }
 
     try {
@@ -134,6 +133,53 @@ export const ActStartup = {
       console.error("Act: couldn't set up the extensions bar", e);
     }
 
+    try {
+      this._tidyToolbar();
+    } catch (e) {
+      console.error("Act: couldn't tidy the toolbar", e);
+    }
+
+    try {
+      // What the new tab page may ask the browser for.
+      ChromeUtils.registerWindowActor("ActNewTab", {
+        parent: { esModuleURI: "resource://act/actors/ActNewTabParent.sys.mjs" },
+        child: {
+          esModuleURI: "resource://act/actors/ActNewTabChild.sys.mjs",
+          events: { DOMDocElementInserted: { capture: true } },
+        },
+        matches: [`${NEWTAB_URL.replace(/[^/]*$/, "")}*`],
+        messageManagerGroups: ["browsers"],
+        safeForUntrustedWebProcess: true,
+      });
+    } catch (e) {
+      console.error("Act: couldn't register the new tab helper", e);
+    }
+
+    try {
+      // Opera style "upload from clipboard" for <input type="file">.
+      ChromeUtils.registerWindowActor("ActUpload", {
+        parent: { esModuleURI: "resource://act/actors/ActUploadParent.sys.mjs" },
+        child: {
+          esModuleURI: "resource://act/actors/ActUploadChild.sys.mjs",
+          events: { click: { capture: true } },
+        },
+        allFrames: true,
+        messageManagerGroups: ["browsers"],
+        enablePreference: "act.upload.clipboard",
+        // The page side only asks, the parent decides (and only hands over
+        // the clipboard when the user picks it), so web processes are fine.
+        safeForUntrustedWebProcess: true,
+      });
+    } catch (e) {
+      console.error("Act: couldn't register the upload helper", e);
+    }
+
+    try {
+      lazy.ActAgents.init();
+    } catch (e) {
+      console.error("Act: agent control", e);
+    }
+
     this._applyNewTab();
     watchPrefs([PREF.newtabEnabled], () => {
       this._applyNewTab();
@@ -146,11 +192,18 @@ export const ActStartup = {
   // can be put back with Customize Toolbar.
   _tidyToolbar() {
     const VERSION_PREF = "act.layout.toolbarVersion";
-    const VERSION = 2;
-    if (Services.prefs.getIntPref(VERSION_PREF, 0) >= VERSION) {
+    const VERSION = 3;
+    let done = Services.prefs.getIntPref(VERSION_PREF, 0);
+    if (done >= VERSION) {
       return;
     }
     let { CustomizableUI } = lazy;
+    // v3: downloads get a permanent spot at the bottom of the sidebar.
+    CustomizableUI.addWidgetToArea("downloads-button", lazy.ActExtensions.AREA, 0);
+    if (done >= 2) {
+      Services.prefs.setIntPref(VERSION_PREF, VERSION);
+      return;
+    }
     // Don't remove sidebar-button: Firefox switches back to horizontal tabs
     // when it disappears. It's hidden with CSS instead.
     for (let id of [
@@ -190,7 +243,7 @@ export const ActStartup = {
       let { AboutNewTab } = lazy;
       if (ActPrefs.newtabEnabled) {
         AboutNewTab.newTabURL = NEWTAB_URL;
-      } else if (AboutNewTab.newTabURL == NEWTAB_URL) {
+      } else if ([NEWTAB_URL, OLD_NEWTAB_URL].includes(AboutNewTab.newTabURL)) {
         AboutNewTab.resetNewTabURL();
       }
     } catch (e) {
@@ -206,6 +259,10 @@ export const ActStartup = {
       defaults.setStringPref(home, NEWTAB_URL);
     } else if (defaults.getStringPref(home, "") == NEWTAB_URL) {
       defaults.setStringPref(home, "about:home");
+    }
+    // Someone who picked the old address as their home page keeps a working one.
+    if (Services.prefs.getStringPref(home, "") == OLD_NEWTAB_URL) {
+      Services.prefs.clearUserPref(home);
     }
   },
 };

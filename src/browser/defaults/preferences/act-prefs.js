@@ -16,12 +16,34 @@ pref("act.actuent.urlbar.maxResults", 3);
 pref("act.actuent.siteActions", true);
 
 pref("act.compactMode", false);
-// Address bar and buttons on top of the tab sidebar, like Zen.
-pref("act.layout.sidebarToolbar", true);
+// By default the toolbar sits above the page and the sidebar runs to the top
+// of the window. True puts the address bar inside the sidebar instead.
+pref("act.layout.sidebarToolbar", false);
 // Extension buttons in a row at the bottom of the tab sidebar.
 pref("act.extensions.inSidebar", true);
 // The Act start page for new tabs (and the home page).
 pref("act.newtab.enabled", true);
+
+// Weather on the new tab page, from Rejn (https://rejn.app). The place is
+// fixed unless useMyLocation is on, then Rejn asks for the browser's
+// location. Units: "" picks from the language (°F for en-US), or set
+// "metric" / "imperial".
+pref("act.weather.enabled", true);
+pref("act.weather.useMyLocation", false);
+pref("act.weather.lat", "55.6761");
+pref("act.weather.lon", "12.5683");
+pref("act.weather.location", "Copenhagen");
+pref("act.weather.units", "metric");
+
+// When a site asks for a file and there's an image on the clipboard, offer
+// to upload that (like Opera).
+pref("act.upload.clipboard", true);
+
+// Let AI agents (Claude Code, Codex...) control the browser through
+// agent/act-mcp.mjs. Off by default: while on, any program on this computer
+// can drive the browser.
+pref("act.agents.enabled", false);
+pref("act.agents.port", 9222);
 
 pref("act.workspaces.enabled", true);
 pref("act.workspaces.list", "[{\"id\":\"home\",\"name\":\"Home\",\"icon\":\"🏠\"}]");
@@ -34,6 +56,9 @@ pref("sidebar.verticalTabs", true);
 pref("sidebar.position_start", true);
 pref("sidebar.visibility", "always-show");
 pref("sidebar.main.tools", "history,bookmarks");
+
+// Downloads sit at the bottom of the sidebar, always visible.
+pref("browser.download.autohideButton", false);
 
 // Keep the chrome quiet.
 pref("browser.toolbars.bookmarks.visibility", "never");
@@ -52,6 +77,10 @@ pref("browser.smartwindow.agent.enabled", false);
 pref("browser.smartwindow.agent.toolbar.enabled", false);
 pref("browser.smartwindow.smartformfill.enabled", false);
 pref("browser.tabs.groups.smart.enabled", false);
+
+// Firefox's own new tab weather (from AccuWeather) is replaced by Rejn.
+pref("browser.newtabpage.activity-stream.showWeather", false);
+pref("browser.newtabpage.activity-stream.system.showWeather", false);
 
 // No sponsored stuff on the new tab page.
 pref("browser.newtabpage.activity-stream.showSponsored", false);

@@ -15,10 +15,17 @@ import { ActPrefs } from "resource://act/ActPrefs.sys.mjs";
 import { setTimeout, clearTimeout } from "resource://gre/modules/Timer.sys.mjs";
 
 const RATE_WINDOW_MS = 60 * 1000;
-const RATE_LIMIT = 20;
-// Background requests stop a little before the limit so the user's own
-// searches still go through.
-const BACKGROUND_LIMIT = 14;
+// Requests per minute each kind of caller may use (the free tier allows 20).
+// Lower priorities stop earlier, so there's always room for what the user
+// is actively doing.
+const LIMITS = {
+  // An explicit search: pressing Enter, the Explore popup.
+  user: 20,
+  // Suggestions while typing, in the address bar and on the new tab page.
+  typing: 17,
+  // Site lookups for the ⚡ button.
+  background: 10,
+};
 
 const SEARCH_TTL_MS = 5 * 60 * 1000;
 const SITE_TTL_MS = 30 * 60 * 1000;
@@ -70,13 +77,13 @@ const sitePending = new Map();
 let requestTimes = [];
 let blockedUntil = 0;
 
-function canSend(background) {
+function canSend(priority) {
   let now = Date.now();
   if (now < blockedUntil) {
     return false;
   }
   requestTimes = requestTimes.filter(t => now - t < RATE_WINDOW_MS);
-  return requestTimes.length < (background ? BACKGROUND_LIMIT : RATE_LIMIT);
+  return requestTimes.length < (LIMITS[priority] ?? LIMITS.background);
 }
 
 export function normalizeDomain(host) {
@@ -208,11 +215,11 @@ export const Actuent = {
     return ActPrefs.actuentEnabled;
   },
 
-  async _post(path, body, { signal, background = false } = {}) {
+  async _post(path, body, { signal, priority = "user" } = {}) {
     if (!this.enabled) {
       throw new ActuentError("Actuent is turned off");
     }
-    if (!canSend(background)) {
+    if (!canSend(priority)) {
       throw new ActuentError("Slow down a little, Actuent is rate limited", {
         status: 429,
       });
@@ -255,7 +262,8 @@ export const Actuent = {
    * @param {string} [options.kind] "web" or "news"
    * @param {number} [options.limit]
    * @param {AbortSignal} [options.signal]
-   * @param {boolean} [options.background] lower priority, fails fast near the rate limit
+   * @param {"user"|"typing"|"background"} [options.priority] lower priorities
+   *   give up earlier near the rate limit
    */
   async search(query, options = {}) {
     query = String(query || "").trim();
@@ -327,7 +335,7 @@ export const Actuent = {
           let result = await this.search(domain, {
             limit: 3,
             signal,
-            background: true,
+            priority: "background",
           });
           site = result.sites.find(s => s.domain == domain) || null;
         } catch (e) {
