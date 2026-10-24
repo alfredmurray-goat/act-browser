@@ -2,8 +2,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-// Actuent in the address bar dropdown. There's always a "Search Actuent"
-// row (it opens Actuent's results page, no request needed), and once you
+// Actuent in the address bar dropdown. There's always a "Try this search in
+// Actuent" row (it opens Actuent's results page, no request needed), and once you
 // stop typing for a moment the matching sites show up under it: "coffee near
 // the station", "notion pricing".
 
@@ -13,7 +13,7 @@ import {
 } from "moz-src:///browser/components/urlbar/UrlbarUtils.sys.mjs";
 import { ActPrefs } from "resource://act/ActPrefs.sys.mjs";
 import { Actuent } from "resource://act/Actuent.sys.mjs";
-import { ActSearch } from "resource://act/ActSearch.sys.mjs";
+import { ActSearch, ENGINE_NAME } from "resource://act/ActSearch.sys.mjs";
 
 const lazy = {};
 ChromeUtils.defineESModuleGetters(lazy, {
@@ -75,17 +75,22 @@ class ActProviderActuent extends UrlbarProvider {
     let { RESULT_TYPE, RESULT_SOURCE } = lazy.UrlbarShared;
 
     // With Actuent as the search engine the first row already is this.
-    if (!ActSearch.isDefaultEngine()) {
+    // Otherwise a search row for the Actuent engine: "Try this search in
+    // Actuent? · Search with Actuent".
+    if (!ActSearch.isDefaultEngine() && ActSearch.hasEngine()) {
       addCallback(
         this,
         new lazy.UrlbarResult({
-          type: RESULT_TYPE.URL,
-          source: RESULT_SOURCE.OTHER_NETWORK,
+          type: RESULT_TYPE.SEARCH,
+          source: RESULT_SOURCE.SEARCH,
           suggestedIndex: 1,
           payload: {
-            url: ActSearch.resultsUrl(text),
-            title: `Search Actuent for “${text}”`,
-            icon: "chrome://act/content/icons/logo-64.png",
+            engine: ENGINE_NAME,
+            query: text,
+            // Not a "suggestion": Firefox drops suggestions that match what
+            // was typed, and this one always does.
+            title: "Try this search in Actuent?",
+            icon: "chrome://act/content/icons/actuent-64.png",
           },
         })
       );

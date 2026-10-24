@@ -15,7 +15,9 @@ import { createRejnWeather } from "../shared/rejn-weather.mjs";
 const $ = id => document.getElementById(id);
 const api = window.ActNewTab;
 
-const LIVE_DELAY_MS = 300;
+// Longer than a typing pause: Actuent's free tier allows 20 requests a
+// minute, shared with the address bar.
+const LIVE_DELAY_MS = 450;
 const LIVE_MIN_CHARS = 3;
 
 let state = null;
@@ -147,6 +149,7 @@ function actuentToRows(result) {
   return rows.filter(row => row.title && isWebUrl(row.url));
 }
 
+
 function currentRows() {
   let query = $("query").value.trim();
   if (!query) {
@@ -162,6 +165,21 @@ function currentRows() {
     icon: "search",
     run: () => webSearch(query),
   });
+  // When Actuent has nothing to show yet (or was busy), offer its full
+  // results page instead, so it's always one click away.
+  let tryActuent = state?.actuentEnabled && !looksLikeUrl(query) && !actuentRows.length && actuentStatus != "loading";
+  if (tryActuent) {
+    return [
+      ...rows,
+      {
+        title: "Try this search in Actuent?",
+        meta: `Places, prices and events for “${query}”`,
+        image: "../icons/actuent-64.png",
+        url: `../search/search.html?q=${encodeURIComponent(query)}`,
+        local: true,
+      },
+    ];
+  }
   return [...rows, ...actuentRows];
 }
 
@@ -188,7 +206,12 @@ function renderSuggestions() {
     li.setAttribute("role", "option");
     li.setAttribute("aria-selected", i == selected);
     let icon = el("span", "icon");
-    if (row.icon) {
+    if (row.image) {
+      let img = el("img");
+      img.src = row.image;
+      img.alt = "";
+      icon.append(img);
+    } else if (row.icon) {
       icon.append(iconNode(row.icon));
     } else {
       icon.textContent = row.letter || "•";
@@ -231,6 +254,8 @@ function renderSuggestions() {
 function activate(row, { background = false } = {}) {
   if (row.run) {
     row.run();
+  } else if (row.local) {
+    location.href = row.url;
   } else if (row.url) {
     openLink(row.url, { background });
   }

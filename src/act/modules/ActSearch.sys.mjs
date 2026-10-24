@@ -21,7 +21,11 @@ export const ENGINE_NAME = "Actuent";
 const ENGINE_HOST = "search.actuent.invalid";
 const ENGINE_URL = `https://${ENGINE_HOST}/?q={searchTerms}`;
 export const RESULTS_URL = "resource://act-page/search/search.html";
-const ICON_URL = "chrome://act/content/icons/logo-64.png";
+const ICON_URL = "chrome://act/content/icons/actuent-64.png";
+// Bump to put a new icon on engines added by older versions (0.6.1 had the
+// Act logo).
+const ICON_VERSION = 2;
+const ICON_VERSION_PREF = "act.actuent.engineIconVersion";
 const ENABLED_PREF = "act.actuent.searchEngine";
 
 function enabled() {
@@ -72,6 +76,14 @@ export const ActSearch = {
     return `${RESULTS_URL}?q=${encodeURIComponent(query)}`;
   },
 
+  hasEngine() {
+    try {
+      return !!lazy.SearchService.getEngineByName(ENGINE_NAME);
+    } catch {
+      return false;
+    }
+  },
+
   isDefaultEngine() {
     try {
       return lazy.SearchService.defaultEngine?.name == ENGINE_NAME;
@@ -94,8 +106,10 @@ export const ActSearch = {
       await lazy.SearchService.removeEngine(engine);
       return;
     }
-    if (engine && !(await engine.getIconURL(16))) {
+    let iconVersion = Services.prefs.getIntPref(ICON_VERSION_PREF, 0);
+    if (engine && (iconVersion < ICON_VERSION || !(await engine.getIconURL(16)))) {
       await this._setIcon(engine);
+      Services.prefs.setIntPref(ICON_VERSION_PREF, ICON_VERSION);
     }
   },
 
