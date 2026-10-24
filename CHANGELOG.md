@@ -3,6 +3,10 @@
 What's new in each version of Act Browser. The browser shows this after it
 updates (turn that off with `act.changelog.enabled` in about:config).
 
+## 0.6.1
+
+- Actuent has its logo in the search engine menu.
+
 ## 0.6.0
 
 - Actuent is a search engine now. Pick it in the search engine menu in the address bar (or type `@actuent`) and you get Actuent's own results page: places with opening hours, what you can do on each site, products with prices, events with dates.
