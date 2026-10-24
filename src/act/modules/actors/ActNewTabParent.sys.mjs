@@ -25,18 +25,28 @@ function isWebUrl(url) {
   }
 }
 
+// The page's own icon, or else the one of the site's home page: Places
+// often only has an icon for one of them.
 async function faviconFor(url) {
+  let candidates = [url];
   try {
-    let favicon = await lazy.PlacesUtils.favicons.getFaviconForPage(
-      Services.io.newURI(url)
-    );
-    return favicon?.dataURI?.spec || null;
-  } catch {
-    return null;
+    candidates.push(new URL(url).origin + "/");
+  } catch {}
+  for (let candidate of candidates) {
+    try {
+      let favicon = await lazy.PlacesUtils.favicons.getFaviconForPage(
+        Services.io.newURI(candidate)
+      );
+      if (favicon?.dataURI?.spec) {
+        return favicon.dataURI.spec;
+      }
+    } catch {}
   }
+  return null;
 }
 
-const PAGE_URL = "resource://act-page/newtab/";
+// The start page, and Actuent's results page which uses search and icons.
+const PAGE_URLS = ["resource://act-page/newtab/", "resource://act-page/search/"];
 const SAVED_PREF = "act.newtab.savedSites";
 const MAX_SAVED = 24;
 
@@ -54,7 +64,8 @@ function wallpaperFile() {
 export class ActNewTabParent extends JSWindowActorParent {
   async receiveMessage({ name, data: args }) {
     // The actor is only registered for the new tab page, check anyway.
-    if (!this.manager.documentURI?.spec.startsWith(PAGE_URL)) {
+    let page = this.manager.documentURI?.spec || "";
+    if (!PAGE_URLS.some(url => page.startsWith(url))) {
       return null;
     }
     args = Array.isArray(args) ? args : [];
@@ -62,7 +73,7 @@ export class ActNewTabParent extends JSWindowActorParent {
       case "ActNewTab:state":
         return this.#state();
       case "ActNewTab:search":
-        return this.#search(String(args[0] ?? ""), !!args[1]?.live);
+        return this.#search(String(args[0] ?? ""), args[1] || {});
       case "ActNewTab:topSites":
         return this.#topSites();
       case "ActNewTab:webSearchUrl":
@@ -75,6 +86,10 @@ export class ActNewTabParent extends JSWindowActorParent {
         return this.#saveSite(String(args[0] ?? ""), String(args[1] ?? ""));
       case "ActNewTab:removeSite":
         return this.#removeSite(String(args[0] ?? ""));
+      case "ActNewTab:otherEngine":
+        return this.#otherEngine(String(args[0] ?? ""));
+      case "ActNewTab:icons":
+        return this.#icons(Array.isArray(args[0]) ? args[0] : []);
       case "ActNewTab:weatherShown":
         lazy.ActWeather.update(args[0]);
         return null;
@@ -107,7 +122,9 @@ export class ActNewTabParent extends JSWindowActorParent {
     };
   }
 
-  async #search(query, live) {
+  // Options come from the page: live (as you type), and the results
+  // page's filters (news, open now, city).
+  async #search(query, options) {
     query = query.trim().slice(0, 300);
     if (!query || !ActPrefs.actuentEnabled) {
       return null;
@@ -115,8 +132,11 @@ export class ActNewTabParent extends JSWindowActorParent {
     // As-you-type searches give up before the rate limit, so pressing Enter
     // always gets through.
     return lazy.Actuent.search(query, {
-      limit: 10,
-      priority: live ? "typing" : "user",
+      limit: options.live ? 10 : 20,
+      priority: options.live ? "typing" : "user",
+      kind: options.kind == "news" ? "news" : "web",
+      openNow: options.openNow === true,
+      city: typeof options.city == "string" ? options.city.trim().slice(0, 80) : "",
     });
   }
 
@@ -236,5 +256,37 @@ export class ActNewTabParent extends JSWindowActorParent {
     }
     Services.prefs.setStringPref(WALLPAPER_PREF, id);
     return this.#wallpaper();
+  }
+
+  // Icons from Places for result domains, { domain: data URL } for the
+  // ones we have. Nothing is fetched from the sites.
+  async #icons(domains) {
+    let icons = {};
+    for (let domain of domains.slice(0, 30)) {
+      domain = String(domain).toLowerCase();
+      if (!/^[a-z0-9.-]+\.[a-z]{2,}$/.test(domain)) {
+        continue;
+      }
+      let icon =
+        (await faviconFor(`https://${domain}/`)) || (await faviconFor(`https://www.${domain}/`));
+      if (icon) {
+        icons[domain] = icon;
+      }
+    }
+    return icons;
+  }
+
+  // For "search with Google instead" on Actuent's results page: the
+  // default engine, or the first other one when Actuent is the default.
+  async #otherEngine(query) {
+    query = query.trim().slice(0, 2000);
+    let engine = await lazy.SearchService.getDefault();
+    if (engine?.name == "Actuent") {
+      engine = (await lazy.SearchService.getVisibleEngines()).find(e => e.name != "Actuent");
+    }
+    if (!engine || !query) {
+      return null;
+    }
+    return { name: engine.name, url: engine.getSubmission(query).uri.spec };
   }
 }

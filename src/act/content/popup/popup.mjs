@@ -22,6 +22,12 @@ const { ActAgents } = ChromeUtils.importESModule(
 const { ActUpdater } = ChromeUtils.importESModule(
   "resource://act/ActUpdater.sys.mjs"
 );
+const { ActSearch } = ChromeUtils.importESModule(
+  "resource://act/ActSearch.sys.mjs"
+);
+const { PlacesUtils } = ChromeUtils.importESModule(
+  "resource://gre/modules/PlacesUtils.sys.mjs"
+);
 
 // The browser window this popup belongs to.
 const win = window.browsingContext.topChromeWindow;
@@ -61,12 +67,37 @@ function focus() {
 
 // --- Explore -------------------------------------------------------------------
 
+const ideas = $("ideas");
+
+function pressed(id) {
+  return $(id).getAttribute("aria-pressed") == "true";
+}
+
+// Icons the browser already has for these sites (from your history).
+async function iconsFor(domains) {
+  let icons = {};
+  await Promise.all(
+    domains.map(async domain => {
+      try {
+        let favicon = await PlacesUtils.favicons.getFaviconForPage(
+          Services.io.newURI(`https://${domain}/`)
+        );
+        if (favicon?.dataURI?.spec) {
+          icons[domain] = favicon.dataURI.spec;
+        }
+      } catch {}
+    })
+  );
+  return icons;
+}
+
 async function search(query) {
   query = (query ?? $("query").value).trim();
   $("query").value = query;
   showView("explore");
+  $("see-all").hidden = !query;
   if (!query) {
-    $("results").replaceChildren();
+    $("results").replaceChildren(ideas);
     $("status").textContent = "";
     return;
   }
@@ -79,8 +110,8 @@ async function search(query) {
   try {
     result = await Actuent.search(query, {
       city: $("city").value.trim(),
-      openNow: $("open-now").checked,
-      kind: $("news").checked ? "news" : "web",
+      openNow: pressed("open-now"),
+      kind: pressed("news") ? "news" : "web",
       limit: 12,
       signal: abort.signal,
     });
@@ -93,10 +124,15 @@ async function search(query) {
   if (abort.signal.aborted) {
     return;
   }
+  let domains = [...new Set([...result.sites, ...result.products].map(r => r.domain).filter(Boolean))];
+  let icons = await iconsFor(domains);
+  if (abort.signal.aborted) {
+    return;
+  }
   $("status").textContent = renderResults($("results"), result, {
     openLink,
     onSearch: search,
-    favicon: domain => `page-icon:https://${domain}/`,
+    icons,
   });
   $("results").scrollTop = 0;
 }
@@ -141,6 +177,31 @@ function agentCommand(cli) {
 
 // --- Wiring --------------------------------------------------------------------
 
+for (let id of ["open-now", "news"]) {
+  $(id).addEventListener("click", () => {
+    $(id).setAttribute("aria-pressed", String(!pressed(id)));
+    if ($("query").value.trim()) {
+      search();
+    }
+  });
+}
+$("city").addEventListener("keydown", e => {
+  if (e.key == "Enter") {
+    e.preventDefault();
+    search();
+  }
+});
+for (let chip of ideas.querySelectorAll(".chip")) {
+  chip.addEventListener("click", () => search(chip.textContent));
+}
+$("see-all").addEventListener("click", () => {
+  let query = $("query").value.trim();
+  if (query) {
+    win.gBrowser.selectedTab = win.gBrowser.addTrustedTab(ActSearch.resultsUrl(query));
+    win.ActPopup.close();
+  }
+});
+
 $("toggle-settings").addEventListener("click", () => {
   showView(currentView == "settings" ? "explore" : "settings");
   focus();
@@ -154,9 +215,6 @@ $("explore-form").addEventListener("submit", e => {
   e.preventDefault();
   search();
 });
-for (let id of ["open-now", "news"]) {
-  $(id).addEventListener("change", () => search());
-}
 for (let input of document.querySelectorAll("[data-pref]")) {
   input.addEventListener("change", () => {
     Services.prefs.setBoolPref(input.dataset.pref, input.checked);

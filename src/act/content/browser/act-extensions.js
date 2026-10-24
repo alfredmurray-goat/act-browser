@@ -34,7 +34,8 @@ var ActExtensionsBar = {
     // Extension popups (and the downloads panel) line up with their
     // button's right edge, which is right for a toolbar at the top of the
     // window. From the bottom of the sidebar they'd open half off screen,
-    // so open them beside the button instead.
+    // so open them next to the sidebar instead, level with the button's
+    // bottom, without covering the sidebar.
     window.addEventListener("popupshowing", this, true);
   },
 
@@ -47,7 +48,9 @@ var ActExtensionsBar = {
       popup.localName == "panel" &&
       anchor.closest?.("#act-extensions-bar, #act-sidebar-footer")
     ) {
-      popup.moveToAnchor(anchor, "end_after");
+      let sidebar = document.getElementById("sidebar-main") || document.getElementById("sidebar-container");
+      let gap = Math.max(0, sidebar.getBoundingClientRect().right - anchor.getBoundingClientRect().right);
+      popup.moveToAnchor(anchor, "end_after", gap + 6, 0);
     }
   },
 };

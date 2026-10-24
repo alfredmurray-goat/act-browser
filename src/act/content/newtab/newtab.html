@@ -15,15 +15,17 @@
   <script type="module" src="newtab.mjs"></script>
 </head>
 <body>
-  <!-- Top right, where Firefox's own new tab puts its weather. -->
-  <aside id="weather" hidden></aside>
+  <!-- Top right, where Firefox's own new tab puts its weather. In the page
+       flow rather than on top of it, so it can't cover the greeting. -->
+  <header id="topbar">
+    <aside id="weather" hidden></aside>
+  </header>
 
   <main>
     <div id="hero">
       <img class="logo" src="../icons/logo-192.png" alt="">
       <div>
         <h1 id="greeting"></h1>
-        <p id="weather-line" hidden></p>
       </div>
     </div>
 
@@ -40,6 +42,7 @@
     </form>
 
     <div id="below">
+      <h2 id="saved-heading">Your sites</h2>
       <nav id="saved-sites" class="site-grid" aria-label="Saved sites"></nav>
       <form id="add-site" hidden>
         <input id="add-site-url" type="text" placeholder="Address, e.g. github.com" autocomplete="off" spellcheck="false" required>

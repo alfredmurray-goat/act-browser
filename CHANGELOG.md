@@ -3,6 +3,15 @@
 What's new in each version of Act Browser. The browser shows this after it
 updates (turn that off with `act.changelog.enabled` in about:config).
 
+## 0.6.0
+
+- Actuent is a search engine now. Pick it in the search engine menu in the address bar (or type `@actuent`) and you get Actuent's own results page: places with opening hours, what you can do on each site, products with prices, events with dates.
+- Actuent is always in the address bar suggestions: a "Search Actuent" row right away, and the matching sites under it when you stop typing. Before, typing fast used up Actuent's limit and the suggestions disappeared.
+- A new look for Explore (the Act button): filters you can tap, site icons, and "See all results" for the full page.
+- The start page is tidier: the weather no longer covers the greeting, your sites are one neat row, and sites without an icon get a colored letter.
+- Extension popups open next to the sidebar instead of on top of it.
+- Downloads now have the same name in every release, so download links always get the newest version.
+
 ## 0.5.0
 
 - Your tabs come back. Quit Act Browser and the tabs from last time are there when you open it again.

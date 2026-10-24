@@ -23,16 +23,35 @@
 
   <section id="view-explore" class="view">
     <form id="explore-form">
-      <input id="query" type="search" placeholder="Places, products, events, sites…" autocomplete="off">
-      <div class="row filters">
-        <input id="city" type="text" placeholder="City" autocomplete="off">
-        <label><input id="open-now" type="checkbox"> Open now</label>
-        <label><input id="news" type="checkbox"> News</label>
+      <div id="querybox">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M7 1.75a5.25 5.25 0 0 1 4.16 8.46l3.07 3.07a.75.75 0 1 1-1.06 1.06l-3.07-3.07A5.25 5.25 0 1 1 7 1.75zm0 1.5a3.75 3.75 0 1 0 0 7.5 3.75 3.75 0 0 0 0-7.5z"/></svg>
+        <input id="query" type="search" placeholder="Places, products, events, sites…" autocomplete="off">
+      </div>
+      <div class="filters">
+        <button type="button" class="pill" id="open-now" aria-pressed="false">Open now</button>
+        <button type="button" class="pill" id="news" aria-pressed="false">News</button>
+        <label class="pill city">
+          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.5a4.75 4.75 0 0 1 4.75 4.75c0 3.2-3.6 7.2-4.2 7.85a.75.75 0 0 1-1.1 0C6.85 13.45 3.25 9.45 3.25 6.25A4.75 4.75 0 0 1 8 1.5zm0 3a1.75 1.75 0 1 0 0 3.5 1.75 1.75 0 0 0 0-3.5z"/></svg>
+          <input id="city" type="text" placeholder="Anywhere" autocomplete="off" aria-label="City">
+        </label>
       </div>
     </form>
     <div id="status" class="status"></div>
-    <div id="results"></div>
-    <footer class="attribution">Live results from <a href="https://actuent.ai">Actuent</a></footer>
+    <div id="results">
+      <div id="ideas">
+        <p>Live from the web, ask for something current:</p>
+        <div class="chips">
+          <button type="button" class="chip">What's open near me right now</button>
+          <button type="button" class="chip">Concerts this weekend</button>
+          <button type="button" class="chip">Cheapest Nike Pegasus</button>
+          <button type="button" class="chip">Notion pricing</button>
+        </div>
+      </div>
+    </div>
+    <footer class="attribution">
+      <span>Live results from <a href="https://actuent.ai">Actuent</a></span>
+      <button type="button" id="see-all" class="link" hidden>See all results</button>
+    </footer>
   </section>
 
   <section id="view-off" class="view" hidden>

@@ -1,12 +1,17 @@
 // Builds Act Browser and makes the downloads for this platform, in dist/:
 //
-//   macOS    Act-Browser-<v>-mac.dmg              drag to Applications
+//   macOS    Act-Browser-mac.dmg                  drag to Applications
 //            Act-Browser-<v>-mac.zip (+ .sig)      for the built-in updater
-//   Windows  Act-Browser-<v>-win64-setup.exe      installer
+//   Windows  Act-Browser-win64-setup.exe          installer
 //            Act-Browser-<v>-win64.zip (+ .sig)    for the built-in updater
-//   Linux    act-browser_<v>_amd64.deb            Debian, Ubuntu...
-//            Act-Browser-<v>-linux-x86_64.tar.xz (+ .sig)
-//                                                 everything else, and the updater
+//   Linux    act-browser_amd64.deb                Debian, Ubuntu...
+//            Act-Browser-linux-x86_64.tar.xz      everything else
+//            Act-Browser-<v>-linux-x86_64.tar.xz (+ .sig)  for the updater
+//
+// The downloads people click have no version in their name, so a link to
+// https://github.com/<repo>/releases/latest/download/<name> always gets the
+// newest one. The updater's archives keep the version: installed copies
+// look for them by that name.
 //
 // Update archives get a .sig: an Ed25519 signature made with the private
 // update key (see scripts/keygen.mjs). The key comes from the ACT_UPDATE_KEY
@@ -76,8 +81,8 @@ function hasCommand(cmd, args = ["--version"]) {
 
 // --- macOS -----------------------------------------------------------------------
 
-function packageMac(layout, base) {
-  let dmg = `${base}.dmg`;
+function packageMac(layout, base, download) {
+  let dmg = `${download}.dmg`;
   rm(dmg);
   let hasDmgbuild = !spawnSync("python3", ["-c", "import dmgbuild"], { stdio: "ignore" }).status;
   if (hasDmgbuild) {
@@ -130,7 +135,7 @@ function isccPath() {
   return null;
 }
 
-function packageWindows(layout, base) {
+function packageWindows(layout, base, download) {
   log("Creating update archive…");
   // The zip holds the act-browser folder itself, like the Linux tarball.
   let zip = `${base}.zip`;
@@ -152,7 +157,7 @@ function packageWindows(layout, base) {
     `/DRepo=${config.updates?.repo || ""}`,
     `/DSourceDir=${layout.app}`,
     `/DOutputDir=${DIST}`,
-    `/DOutputName=${path.basename(base)}-setup`,
+    `/DOutputName=${path.basename(download)}-setup`,
     `/DIconFile=${path.join(layout.app, "act.ico")}`,
     path.join(ROOT, "scripts", "windows", "act-browser.iss"),
   ]);
@@ -160,11 +165,12 @@ function packageWindows(layout, base) {
 
 // --- Linux -----------------------------------------------------------------------
 
-function packageLinux(layout, base) {
+function packageLinux(layout, base, download) {
   let tarball = `${base}.tar.xz`;
   rm(tarball);
   run("tar", ["-cJf", tarball, "-C", path.dirname(layout.app), path.basename(layout.app)]);
   sign(tarball);
+  fs.copyFileSync(tarball, `${download}.tar.xz`);
 
   if (!hasCommand("dpkg-deb")) {
     log("dpkg-deb isn't installed, skipping the .deb.");
@@ -215,7 +221,7 @@ function packageLinux(layout, base) {
       "--build",
       "--root-owner-group",
       root,
-      path.join(DIST, `act-browser_${version}_${arch}.deb`),
+      path.join(DIST, `act-browser_${arch}.deb`),
     ]);
   } finally {
     rm(root);
@@ -230,13 +236,14 @@ if (!config.updates?.publicKey) {
 
 let layout = await build();
 let base = path.join(DIST, `Act-Browser-${version}-${platform}`);
+let download = path.join(DIST, `Act-Browser-${platform}`);
 
 if (isMac) {
-  packageMac(layout, base);
+  packageMac(layout, base, download);
 } else if (isWindows) {
-  packageWindows(layout, base);
+  packageWindows(layout, base, download);
 } else if (isLinux) {
-  packageLinux(layout, base);
+  packageLinux(layout, base, download);
 }
 
 log(`Done: ${path.relative(process.cwd(), DIST)}`);
