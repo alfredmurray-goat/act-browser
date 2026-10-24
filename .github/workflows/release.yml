@@ -5,6 +5,14 @@
 #   Windows  -setup.exe (installer)             + .zip/.sig for updates
 #   Linux    .deb, .tar.xz                      + .tar.xz.sig for updates
 #
+# The downloads have the same name in every release, so these links always
+# get the newest version (for the website):
+#
+#   https://github.com/alfredmurray-goat/act-browser/releases/latest/download/Act-Browser-mac.dmg
+#   https://github.com/alfredmurray-goat/act-browser/releases/latest/download/Act-Browser-win64-setup.exe
+#   https://github.com/alfredmurray-goat/act-browser/releases/latest/download/act-browser_amd64.deb
+#   https://github.com/alfredmurray-goat/act-browser/releases/latest/download/Act-Browser-linux-x86_64.tar.xz
+#
 # To release:
 #
 #   npm version 0.4.0 --no-git-tag-version
