@@ -51,9 +51,35 @@
       -moz-default-appearance: -moz-window-titlebar;
     }
   }
+
+  /* In full screen there's no desktop behind the window, so macOS has
+     nothing to blur and Firefox drops the material. Paint a tint close to
+     what the window looks like instead of flat grey. */
+  :root[customtitlebar][macOSNativeFullscreen]:not([lwtheme]) {
+    background: radial-gradient(
+        120% 90% at 0% 0%,
+        color-mix(in srgb, var(--act-accent) 22%, transparent),
+        transparent 70%
+      ),
+      linear-gradient(
+        160deg,
+        color-mix(in srgb, var(--act-accent) 12%, var(--act-chrome-bg)),
+        var(--act-chrome-bg) 70%
+      );
+
+    #navigator-toolbox,
+    #browser,
+    #sidebar-container {
+      background: transparent;
+    }
+
+    &[act-compact] #sidebar-container {
+      background: var(--act-chrome-bg);
+    }
+  }
 }
 
-:root:not([inDOMFullscreen], [sizemode="fullscreen"]) {
+:root:not([inDOMFullscreen]) {
   #tabbrowser-tabbox {
     padding: 0 var(--act-gap) var(--act-gap) 0;
     background: transparent;
@@ -1029,3 +1055,44 @@
   cursor: pointer;
 }
 
+
+/* --- Private windows -------------------------------------------------------- */
+
+/* A deep purple frame instead of the usual one, and a badge at the top of
+   the sidebar, so a private window can't be mistaken for a normal one. */
+:root[privatebrowsingmode="temporary"]:not([lwtheme]) {
+  --act-private-bg: #25153f;
+  --act-private-accent: #a77bff;
+
+  background: radial-gradient(120% 90% at 0% 0%, #4a2283, transparent 70%),
+    linear-gradient(160deg, #331b5c, var(--act-private-bg) 70%) !important;
+  color-scheme: dark;
+
+  #navigator-toolbox,
+  #browser,
+  #sidebar-container {
+    background: transparent !important;
+    appearance: none !important;
+  }
+
+  &[act-compact] #sidebar-container {
+    background: var(--act-private-bg) !important;
+  }
+}
+
+#act-private-badge {
+  margin: 0 0 0 8px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, #a77bff 30%, transparent);
+  color: #e6d9ff;
+  font-size: 11px;
+  font-weight: 600;
+  padding-inline-start: 22px;
+  background-image: url("chrome://browser/skin/privateBrowsing.svg");
+  background-repeat: no-repeat;
+  background-position: 6px center;
+  background-size: 12px;
+  -moz-context-properties: fill;
+  fill: currentColor;
+}
