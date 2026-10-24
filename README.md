@@ -43,6 +43,9 @@ The first time you open it:
   once.
 - **Windows** SmartScreen may say it "protected your PC". Click *More info ›
   Run anyway*. Same reason: no paid code signing certificate yet.
+- **Bitwarden** opens its own welcome tab. Log in or create a free account
+  there (or later, from its button at the bottom of the sidebar) to save
+  passwords and passkeys. Don't want it? Remove it like any add-on.
 
 ## Features
 
@@ -61,7 +64,16 @@ The first time you open it:
 - Settings, saved sites, history and downloads along the bottom of the
   sidebar, with your extensions' icons stacked up the right hand side
   instead of behind the puzzle piece menu. Popups and badges work as usual.
-- uBlock Origin comes preinstalled. It's a normal add-on, you can remove it.
+- uBlock Origin and Bitwarden come preinstalled. They're normal add-ons, you
+  can remove them.
+- **Passkeys go to Bitwarden.** When a site asks for a passkey, Bitwarden
+  answers: sign in with one you saved there, or save a new one. If you
+  aren't logged in to Bitwarden, Act shows a box with an *Open Bitwarden*
+  button instead of Firefox's "Touch your security key". USB security keys
+  still work, from that box or Bitwarden's own "use a security key" option.
+  Passkeys in iCloud Keychain (Touch ID) don't work yet: macOS only offers
+  them to browsers signed with Apple's passkey entitlement, which needs an
+  Apple developer account.
 - Upload from the clipboard, like Opera: when a site asks for a file and you
   have an image copied, a small menu offers to upload that instead.
 
@@ -188,7 +200,7 @@ npm run dev
 ```
 
 The first run downloads Firefox (the version is pinned in
-`act.config.json`) and uBlock Origin, builds a dev copy into `.cache/dev`
+`act.config.json`), uBlock Origin and Bitwarden, builds a dev copy into `.cache/dev`
 and starts it with its own profile. After that, changes under `src/act/`
 only need a browser restart.
 
@@ -261,6 +273,7 @@ src/
     │   ├── Actuent.sys.mjs         Actuent API client + LAWP lookups
     │   ├── ActUrlbar.sys.mjs       address bar provider
     │   ├── ActExtensions.sys.mjs   the downloads + extensions row
+    │   ├── ActPasskeys.sys.mjs     sends passkey requests to Bitwarden
     │   ├── ActAgents.sys.mjs       starts the agent server on demand
     │   ├── ActUpdater.sys.mjs      self-updates from GitHub releases
     │   ├── ActFraming.sys.mjs      lets any site be framed
@@ -287,9 +300,10 @@ Issues and pull requests are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 
-[Mozilla Public License 2.0](LICENSE), same as Firefox. uBlock Origin is
-GPLv3 and downloaded unmodified from addons.mozilla.org, its source is at
-[github.com/gorhill/uBlock](https://github.com/gorhill/uBlock).
+[Mozilla Public License 2.0](LICENSE), same as Firefox. uBlock Origin and
+Bitwarden are GPLv3 and downloaded unmodified from addons.mozilla.org. Their
+source is at [github.com/gorhill/uBlock](https://github.com/gorhill/uBlock)
+and [github.com/bitwarden/clients](https://github.com/bitwarden/clients).
 
 Firefox is a trademark of the Mozilla Foundation. Act Browser is not made or
 endorsed by Mozilla, which is also why it ships with its own name and logo.
