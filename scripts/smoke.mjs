@@ -142,6 +142,16 @@ try {
       bridge = !!gBrowser.selectedBrowser.browsingContext.currentWindowGlobal.getActor("ActNewTab");
     } catch {}
 
+    // A private window gets the badge at the top of its sidebar.
+    let privateWin = OpenBrowserWindow({ private: true });
+    await new Promise(r => privateWin.addEventListener("load", r, { once: true }));
+    let privateBadge = false;
+    for (let i = 0; i < 40 && !privateBadge; i++) {
+      await new Promise(r => setTimeout(r, 250));
+      privateBadge = !!privateWin.document.getElementById("act-private-badge");
+    }
+    privateWin.close();
+
     let brand = Services.strings
       .createBundle("chrome://branding/locale/brand.properties")
       .GetStringFromName("brandShortName");
@@ -151,6 +161,9 @@ try {
       verticalTabs: Services.prefs.getBoolPref("sidebar.verticalTabs"),
       footer: !!document.getElementById("act-sidebar-footer"),
       actButton: !!document.getElementById("act-button"),
+      privateButton: !!document.getElementById("act-tool-private"),
+      normalBadge: !!document.getElementById("act-private-badge"),
+      privateBadge,
       version: ActUpdater.currentVersion,
       updaterReady: ActUpdater.supported,
       newTabPage: page,
@@ -167,6 +180,9 @@ try {
   check(report.verticalTabs, "tabs aren't on the left");
   check(report.footer, "sidebar footer missing");
   check(report.actButton, "Act toolbar button missing");
+  check(report.privateButton, "private window button missing");
+  check(!report.normalBadge, "normal window has the private badge");
+  check(report.privateBadge, "private window has no private badge");
   check(report.version == pkg.version, `version is ${report.version}, expected ${pkg.version}`);
   check(report.updaterReady, "updater isn't set up (build.json / public key)");
   check(report.newTabPage?.startsWith("resource://act-page/newtab/"), `new tab is ${report.newTabPage}`);
