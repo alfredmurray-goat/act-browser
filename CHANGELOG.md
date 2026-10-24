@@ -3,6 +3,10 @@
 What's new in each version of Act Browser. The browser shows this after it
 updates (turn that off with `act.changelog.enabled` in about:config).
 
+## 0.6.4
+
+- Passkeys go to Bitwarden. Logged in, Bitwarden answers sites' passkey requests itself. Logged out, the "Touch your security key" box is replaced by one with an Open Bitwarden button (a security key still works from there).
+
 ## 0.6.3
 
 - Bitwarden comes pre-installed (from addons.mozilla.org, and you can remove it). It can save and use passkeys, which the Mac's own Touch ID passkeys can't do yet in Act Browser.

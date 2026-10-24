@@ -9,6 +9,7 @@ ChromeUtils.defineESModuleGetters(lazy, {
   AboutNewTab: "resource:///modules/AboutNewTab.sys.mjs",
   ActAgents: "resource://act/ActAgents.sys.mjs",
   ActExtensions: "resource://act/ActExtensions.sys.mjs",
+  ActPasskeys: "resource://act/ActPasskeys.sys.mjs",
   ActFraming: "resource://act/ActFraming.sys.mjs",
   ActSearch: "resource://act/ActSearch.sys.mjs",
   ActUpdater: "resource://act/ActUpdater.sys.mjs",
@@ -236,6 +237,12 @@ export const ActStartup = {
       lazy.ActSearch.init();
     } catch (e) {
       console.error("Act: Actuent search engine", e);
+    }
+
+    try {
+      lazy.ActPasskeys.init();
+    } catch (e) {
+      console.error("Act: passkeys", e);
     }
 
     this._applyNewTab();
