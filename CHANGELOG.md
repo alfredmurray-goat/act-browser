@@ -3,6 +3,11 @@
 What's new in each version of Act Browser. The browser shows this after it
 updates (turn that off with `act.changelog.enabled` in about:config).
 
+## 0.7.1
+
+- Private windows look different: a deep purple frame and a Private badge at the top of the sidebar, so you can't mistake one for a normal window. Open one from the new button at the bottom of the sidebar (or ⇧⌘P / Ctrl+Shift+P).
+- Full screen looks just like the window, only bigger: the see-through frame, the rounded page edges, and the toolbar and sidebar stay put instead of sliding away.
+
 ## 0.7.0
 
 - Your open tabs and tab groups carry over to your other computers. Sign in with a Mozilla account from the Act menu's settings (Sync, at the top). On another computer, Act offers to open them once they arrive, with pinned tabs and tab groups (names, colours, collapsed or not) put back. Later you can open any computer's tabs from the same Sync section.

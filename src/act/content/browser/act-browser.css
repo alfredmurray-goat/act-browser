@@ -31,9 +31,10 @@
 
 /* On macOS the frame around the page is see-through, like Zen: the desktop
    shows through, blurred (the same native material Firefox uses for its
-   title bar). Other platforms keep the solid color above. */
+   title bar), in full screen too. Other platforms keep the solid color
+   above. */
 @media (-moz-platform: macos) {
-  :root[customtitlebar]:not([lwtheme], [macOSNativeFullscreen]) {
+  :root[customtitlebar]:not([lwtheme]) {
     #navigator-toolbox,
     #sidebar-container {
       background-color: transparent;
@@ -51,9 +52,16 @@
       -moz-default-appearance: -moz-window-titlebar;
     }
   }
+
+  /* Full screen looks the same as the window, just bigger. Firefox turns
+     the toolbox's material off there, so turn it back on. */
+  :root[customtitlebar][macOSNativeFullscreen]:not([lwtheme]) #navigator-toolbox::after {
+    -moz-default-appearance: -moz-window-titlebar;
+    appearance: auto;
+  }
 }
 
-:root:not([inDOMFullscreen], [sizemode="fullscreen"]) {
+:root:not([inDOMFullscreen]) {
   #tabbrowser-tabbox {
     padding: 0 var(--act-gap) var(--act-gap) 0;
     background: transparent;
@@ -1029,3 +1037,44 @@
   cursor: pointer;
 }
 
+
+/* --- Private windows -------------------------------------------------------- */
+
+/* A deep purple frame instead of the usual one, and a badge at the top of
+   the sidebar, so a private window can't be mistaken for a normal one. */
+:root[privatebrowsingmode="temporary"]:not([lwtheme]) {
+  --act-private-bg: #25153f;
+  --act-private-accent: #a77bff;
+
+  background: radial-gradient(120% 90% at 0% 0%, #4a2283, transparent 70%),
+    linear-gradient(160deg, #331b5c, var(--act-private-bg) 70%) !important;
+  color-scheme: dark;
+
+  #navigator-toolbox,
+  #browser,
+  #sidebar-container {
+    background: transparent !important;
+    appearance: none !important;
+  }
+
+  &[act-compact] #sidebar-container {
+    background: var(--act-private-bg) !important;
+  }
+}
+
+#act-private-badge {
+  margin: 0 0 0 8px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, #a77bff 30%, transparent);
+  color: #e6d9ff;
+  font-size: 11px;
+  font-weight: 600;
+  padding-inline-start: 22px;
+  background-image: url("chrome://browser/skin/privateBrowsing.svg");
+  background-repeat: no-repeat;
+  background-position: 6px center;
+  background-size: 12px;
+  -moz-context-properties: fill;
+  fill: currentColor;
+}

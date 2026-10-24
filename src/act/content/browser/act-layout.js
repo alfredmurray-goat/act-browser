@@ -49,12 +49,23 @@ var ActLayout = {
     title.setAttribute("crop", "end");
     title.setAttribute("context", "act-workspace-menu");
     row.append(title);
+    // So it's obvious at a glance which window is private.
+    if (PrivateBrowsingUtils.isWindowPrivate(window)) {
+      let badge = document.createXULElement("label");
+      badge.id = "act-private-badge";
+      badge.setAttribute("value", "Private");
+      badge.setAttribute(
+        "tooltiptext",
+        "Private window: history, cookies and searches are forgotten when you close it"
+      );
+      row.append(badge);
+    }
     header.append(titlebar, row);
     document.getElementById("sidebar-container").prepend(header);
   },
 
-  // Bottom of the sidebar, a mirrored L: settings, saved sites, history and
-  // downloads (act-extensions.js) along the bottom, and above it the dock:
+  // Bottom of the sidebar, a mirrored L: settings, saved sites, history, a
+  // private window and downloads (act-extensions.js) along the bottom, and above it the dock:
   // extension icons stacked up the right hand side, and the corner next to
   // them (act-corner.js).
   _buildFooter() {
@@ -91,6 +102,12 @@ var ActLayout = {
       ),
       button("act-tool-history", "History", "chrome://browser/skin/history.svg", e =>
         this._showPanel("PanelUI-history", e.target)
+      ),
+      button(
+        "act-tool-private",
+        `New private window (${AppConstants.platform == "macosx" ? "⇧⌘P" : "Ctrl+Shift+P"})`,
+        "chrome://browser/skin/privateBrowsing.svg",
+        () => OpenBrowserWindow({ private: true })
       )
     );
     document.getElementById("sidebar-container").append(dock, footer);
