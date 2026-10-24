@@ -207,3 +207,18 @@ kbd {
 .row.wrap {
   flex-wrap: wrap;
 }
+
+.sync-device {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.sync-device span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
