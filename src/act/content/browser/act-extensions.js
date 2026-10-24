@@ -31,12 +31,38 @@ var ActExtensionsBar = {
     CustomizableUI.registerToolbarNode(this.toolbar);
     ActExtensions.sync();
 
+    // Firefox opens the downloads panel from listeners on
+    // #navigator-toolbox (navigator-toolbox.js), not on the button, and the
+    // sidebar is outside it. Do the same here.
+    for (let type of ["mousedown", "keypress", "dragenter", "dragover", "drop"]) {
+      this.tools.addEventListener(type, event => this.onToolsEvent(event), type == "keypress");
+    }
+
     // Extension popups (and the downloads panel) line up with their
     // button's right edge, which is right for a toolbar at the top of the
     // window. From the bottom of the sidebar they'd open half off screen,
     // so open them next to the sidebar instead, level with the button's
     // bottom, without covering the sidebar.
     window.addEventListener("popupshowing", this, true);
+  },
+
+  onToolsEvent(event) {
+    if (!event.target.closest?.("#downloads-button")) {
+      return;
+    }
+    switch (event.type) {
+      case "mousedown":
+      case "keypress":
+        DownloadsIndicatorView.onCommand(event);
+        break;
+      case "dragenter":
+      case "dragover":
+        DownloadsIndicatorView.onDragOver(event);
+        break;
+      case "drop":
+        DownloadsIndicatorView.onDrop(event);
+        break;
+    }
   },
 
   handleEvent(event) {
