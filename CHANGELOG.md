@@ -3,6 +3,11 @@
 What's new in each version of Act Browser. The browser shows this after it
 updates (turn that off with `act.changelog.enabled` in about:config).
 
+## 0.6.2
+
+- Actuent's own logo in the search engine menu, on its results page and in suggestions.
+- Actuent is always in the suggestions: "Try this search in Actuent?" in the address bar and on the start page, also when Actuent's live results are busy or find nothing.
+
 ## 0.6.1
 
 - Actuent has its logo in the search engine menu.

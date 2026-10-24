@@ -651,3 +651,10 @@ main {
   }
 }
 
+/* The Actuent logo in "Try this search in Actuent?". */
+.suggestion .icon img {
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+}
+
