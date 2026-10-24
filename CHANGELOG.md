@@ -3,6 +3,10 @@
 What's new in each version of Act Browser. The browser shows this after it
 updates (turn that off with `act.changelog.enabled` in about:config).
 
+## 0.6.5
+
+- The downloads button at the bottom of the sidebar opens the downloads panel again.
+
 ## 0.6.4
 
 - Passkeys go to Bitwarden. Logged in, Bitwarden answers sites' passkey requests itself. Logged out, the "Touch your security key" box is replaced by one with an Open Bitwarden button (a security key still works from there).
