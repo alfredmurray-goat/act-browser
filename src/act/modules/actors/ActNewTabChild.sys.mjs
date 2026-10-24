@@ -16,6 +16,9 @@ const METHODS = [
   "savedSites",
   "saveSite",
   "removeSite",
+  "weatherShown",
+  "wallpaper",
+  "setWallpaper",
 ];
 
 export class ActNewTabChild extends JSWindowActorChild {

@@ -63,6 +63,7 @@ var ActBrowser = {
       ActWorkspaces,
       ActTabGroups,
       ActExtensionsBar,
+      ActCorner,
       ActPopup,
       ActSiteActions,
       ActContextMenu,

@@ -14,6 +14,7 @@ ChromeUtils.defineESModuleGetters(lazy, {
   ActUrlbar: "resource://act/ActUrlbar.sys.mjs",
   CustomizableUI:
     "moz-src:///browser/components/customizableui/CustomizableUI.sys.mjs",
+  SessionStore: "moz-src:///browser/components/sessionstore/SessionStore.sys.mjs",
 });
 
 const BROWSER_URL = "chrome://browser/content/browser.xhtml";
@@ -21,6 +22,7 @@ const BROWSER_URL = "chrome://browser/content/browser.xhtml";
 // privileges, so the page can embed third-party widgets like the weather.
 export const NEWTAB_URL = "resource://act-page/newtab/newtab.html";
 const OLD_NEWTAB_URL = "chrome://act/content/newtab/newtab.html";
+const CHANGELOG_URL = "resource://act-page/changelog/changelog.html";
 
 // Loaded into every browser window, in this order. They share the window's
 // global scope, same as Firefox's own browser-*.js scripts.
@@ -30,6 +32,7 @@ const WINDOW_SCRIPTS = [
   "chrome://act/content/browser/act-workspaces.js",
   "chrome://act/content/browser/act-tabgroups.js",
   "chrome://act/content/browser/act-extensions.js",
+  "chrome://act/content/browser/act-corner.js",
   "chrome://act/content/browser/act-popup.js",
   "chrome://act/content/browser/act-site-actions.js",
   "chrome://act/content/browser/act-context-menu.js",
@@ -107,6 +110,37 @@ export const ActStartup = {
     } catch (e) {
       console.error("Act: window init failed", e);
     }
+
+    if (!this._changelogChecked) {
+      this._changelogChecked = true;
+      this._showChangelog(win).catch(e => console.error("Act: changelog", e));
+    }
+  },
+
+  // After an update, a tab with what's new. Not on a first run: someone who
+  // just installed Act Browser doesn't need a list of changes.
+  async _showChangelog(win) {
+    const PREF_SEEN = "act.changelog.lastSeen";
+    let version = lazy.ActUpdater.currentVersion;
+    let seen = Services.prefs.getStringPref(PREF_SEEN, "");
+    if (!version || seen == version) {
+      return;
+    }
+    Services.prefs.setStringPref(PREF_SEEN, version);
+    // Versions from before the changelog didn't record anything, but they
+    // did tidy the toolbar, so that tells an update from a new install.
+    let { compareVersions } = ChromeUtils.importESModule("resource://act/ActUpdater.sys.mjs");
+    let updated = seen ? compareVersions(version, seen) > 0 : this._existingProfile;
+    if (!updated || !Services.prefs.getBoolPref("act.changelog.enabled", true)) {
+      return;
+    }
+    // Wait for the tabs from last time, or restoring them would close ours.
+    await lazy.SessionStore.promiseAllWindowsRestored;
+    if (win.closed) {
+      return;
+    }
+    let url = seen ? `${CHANGELOG_URL}?from=${encodeURIComponent(seen)}` : CHANGELOG_URL;
+    win.gBrowser.selectedTab = win.gBrowser.addTrustedTab(url);
   },
 
   // Things that only need to happen once per session, not per window.
@@ -210,6 +244,7 @@ export const ActStartup = {
     const VERSION_PREF = "act.layout.toolbarVersion";
     const VERSION = 4;
     let done = Services.prefs.getIntPref(VERSION_PREF, 0);
+    this._existingProfile = done > 0;
     if (done >= VERSION) {
       return;
     }

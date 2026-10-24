@@ -122,6 +122,9 @@ function usePasskeysWithoutApple(resources) {
   );
 }
 
+// The changelog lives at the top of the repo, the "what's new" page shows it.
+const CHANGELOG = [path.join(ROOT, "CHANGELOG.md"), "act/content/changelog/CHANGELOG.md"];
+
 function installActFiles(resources) {
   for (let [from, to] of INSTALL) {
     let target = path.join(resources, to);
@@ -131,6 +134,7 @@ function installActFiles(resources) {
   let agentTarget = path.join(resources, AGENT[1]);
   rm(agentTarget);
   copy(path.join(ROOT, AGENT[0]), agentTarget);
+  copy(CHANGELOG[0], path.join(resources, CHANGELOG[1]));
   writeBuildInfo(resources);
 }
 

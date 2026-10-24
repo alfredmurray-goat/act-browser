@@ -29,6 +29,8 @@ const SOURCES = [
     "browser/defaults/preferences/act-prefs.js",
   ],
   [path.join(ROOT, "agent"), "agent"],
+  // After act/, it goes inside it.
+  [path.join(ROOT, "CHANGELOG.md"), "act/content/changelog/CHANGELOG.md"],
 ];
 
 // Copied fresh on every start rather than linked: pages like the new tab run

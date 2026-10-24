@@ -93,6 +93,12 @@ export const ActExtensions = {
 
   // Called once a window has added its toolbar node.
   sync() {
+    // Downloads belongs in the bottom row. Profiles from 0.4.0 can have it
+    // stuck in the extensions column, where its panel won't open.
+    let downloads = lazy.CustomizableUI.getPlacementOfWidget("downloads-button");
+    if (downloads?.area != TOOLS_AREA) {
+      lazy.CustomizableUI.addWidgetToArea("downloads-button", TOOLS_AREA);
+    }
     if (ActPrefs.extensionsInSidebar) {
       moveAllIn();
     } else {

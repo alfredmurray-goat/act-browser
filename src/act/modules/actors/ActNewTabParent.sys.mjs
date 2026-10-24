@@ -9,6 +9,7 @@ import { ActPrefs } from "resource://act/ActPrefs.sys.mjs";
 
 const lazy = {};
 ChromeUtils.defineESModuleGetters(lazy, {
+  ActWeather: "resource://act/ActWeather.sys.mjs",
   Actuent: "resource://act/Actuent.sys.mjs",
   NewTabUtils: "resource://gre/modules/NewTabUtils.sys.mjs",
   PlacesUtils: "resource://gre/modules/PlacesUtils.sys.mjs",
@@ -39,6 +40,17 @@ const PAGE_URL = "resource://act-page/newtab/";
 const SAVED_PREF = "act.newtab.savedSites";
 const MAX_SAVED = 24;
 
+const WALLPAPER_PREF = "act.newtab.wallpaper";
+const WALLPAPER_TYPE_PREF = "act.newtab.wallpaperType";
+// Must match the presets in newtab.css.
+const WALLPAPERS = ["glow", "aurora", "sunset", "ocean", "forest", "graphite", "custom"];
+const WALLPAPER_TYPES = ["image/png", "image/jpeg", "image/webp", "image/gif"];
+const MAX_WALLPAPER_BYTES = 15 * 1024 * 1024;
+
+function wallpaperFile() {
+  return PathUtils.join(PathUtils.profileDir, "act-wallpaper");
+}
+
 export class ActNewTabParent extends JSWindowActorParent {
   async receiveMessage({ name, data: args }) {
     // The actor is only registered for the new tab page, check anyway.
@@ -63,6 +75,13 @@ export class ActNewTabParent extends JSWindowActorParent {
         return this.#saveSite(String(args[0] ?? ""), String(args[1] ?? ""));
       case "ActNewTab:removeSite":
         return this.#removeSite(String(args[0] ?? ""));
+      case "ActNewTab:weatherShown":
+        lazy.ActWeather.update(args[0]);
+        return null;
+      case "ActNewTab:wallpaper":
+        return this.#wallpaper();
+      case "ActNewTab:setWallpaper":
+        return this.#setWallpaper(String(args[0] ?? ""), args[1], String(args[2] ?? ""));
     }
     return null;
   }
@@ -175,5 +194,47 @@ export class ActNewTabParent extends JSWindowActorParent {
     let win = this.browsingContext.topChromeWindow;
     win?.ActBrowser?.openLink(url, { background: true });
     return true;
+  }
+
+  // The start page wallpaper: a preset name, or "custom" with the picture
+  // the user chose, which is kept as a file in the profile.
+  async #wallpaper() {
+    let id = Services.prefs.getStringPref(WALLPAPER_PREF, "glow");
+    if (!WALLPAPERS.includes(id)) {
+      id = "glow";
+    }
+    if (id != "custom") {
+      return { id };
+    }
+    try {
+      let bytes = await IOUtils.read(wallpaperFile());
+      let type = Services.prefs.getStringPref(WALLPAPER_TYPE_PREF, "image/jpeg");
+      return { id, image: { bytes, type } };
+    } catch {
+      // The file is gone, fall back to the default.
+      return { id: "glow" };
+    }
+  }
+
+  async #setWallpaper(id, bytes, type) {
+    if (!WALLPAPERS.includes(id)) {
+      return this.#wallpaper();
+    }
+    if (id == "custom") {
+      if (
+        !(bytes instanceof Uint8Array) ||
+        !bytes.length ||
+        bytes.length > MAX_WALLPAPER_BYTES ||
+        !WALLPAPER_TYPES.includes(type)
+      ) {
+        return this.#wallpaper();
+      }
+      await IOUtils.write(wallpaperFile(), bytes);
+      Services.prefs.setStringPref(WALLPAPER_TYPE_PREF, type);
+    } else {
+      await IOUtils.remove(wallpaperFile(), { ignoreAbsent: true });
+    }
+    Services.prefs.setStringPref(WALLPAPER_PREF, id);
+    return this.#wallpaper();
   }
 }

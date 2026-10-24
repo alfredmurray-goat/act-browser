@@ -25,6 +25,17 @@ pref("act.extensions.inSidebar", true);
 pref("act.newtab.enabled", true);
 // Sites saved on the start page, as JSON [{url, title}].
 pref("act.newtab.savedSites", "[]");
+// Start page wallpaper: glow, aurora, sunset, ocean, forest, graphite, or
+// custom (your own picture, kept in the profile as act-wallpaper).
+pref("act.newtab.wallpaper", "glow");
+
+// The corner of the sidebar above the bottom row: what's playing, and the
+// time with the weather.
+pref("act.sidebar.nowPlaying", true);
+pref("act.sidebar.glance", true);
+
+// After an update, open a tab with what's new.
+pref("act.changelog.enabled", true);
 
 // Weather on the new tab page, from Rejn (https://rejn.app). The place is
 // fixed unless useMyLocation is on, then Rejn asks for the browser's
@@ -102,3 +113,6 @@ pref("browser.newtabpage.activity-stream.showSponsored", false);
 pref("browser.newtabpage.activity-stream.showSponsoredTopSites", false);
 pref("browser.newtabpage.activity-stream.feeds.section.topstories", false);
 pref("browser.urlbar.suggest.quicksuggest.sponsored", false);
+
+// Open the tabs from last time when the browser starts.
+pref("browser.startup.page", 3);
