@@ -3,6 +3,11 @@
 What's new in each version of Act Browser. The browser shows this after it
 updates (turn that off with `act.changelog.enabled` in about:config).
 
+## 0.7.0
+
+- Your open tabs and tab groups carry over to your other computers. Sign in with a Mozilla account from the Act menu's settings (Sync, at the top). On another computer, Act offers to open them once they arrive, with pinned tabs and tab groups (names, colours, collapsed or not) put back. Later you can open any computer's tabs from the same Sync section.
+- Workspaces' names and icons sync too.
+
 ## 0.6.5
 
 - The downloads button at the bottom of the sidebar opens the downloads panel again.

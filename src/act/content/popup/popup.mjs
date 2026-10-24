@@ -25,6 +25,9 @@ const { ActUpdater } = ChromeUtils.importESModule(
 const { ActSearch } = ChromeUtils.importESModule(
   "resource://act/ActSearch.sys.mjs"
 );
+const { ActTabSync } = ChromeUtils.importESModule(
+  "resource://act/ActTabSync.sys.mjs"
+);
 const { PlacesUtils } = ChromeUtils.importESModule(
   "resource://gre/modules/PlacesUtils.sys.mjs"
 );
@@ -147,12 +150,39 @@ function loadSettings() {
   $("version").textContent = `built on Firefox ${Services.appinfo.version}`;
 
   showUpdateState();
+  showSyncState().catch(e => console.error("Act: sync settings", e));
 
   let agents = ActPrefs.agentsEnabled;
   $("agent-setup").hidden = !agents;
   $("agent-status").textContent = agents
     ? `Listening on localhost:${ActPrefs.agentsPort}. Paste the command in a terminal, then restart your agent.`
     : "";
+}
+
+async function showSyncState() {
+  let signedIn = ActTabSync.signedIn;
+  $("sync-status").textContent = signedIn
+    ? `Signed in as ${ActTabSync.email}. Open tabs, tab groups, bookmarks, history, passwords and settings sync with your other computers.`
+    : "Sign in with a Mozilla account to carry your open tabs and tab groups over to your other computers, along with bookmarks, history and passwords.";
+  $("sync-account").textContent = signedIn ? "Account and sync settings" : "Sign in to sync";
+  $("sync-account").classList.toggle("primary", !signedIn);
+
+  let rows = [];
+  for (let device of await ActTabSync.devices()) {
+    let row = document.createElement("div");
+    row.className = "row sync-device";
+    let text = document.createElement("span");
+    text.textContent = `${device.name}: ${ActTabSync.describe(device)}`;
+    let open = document.createElement("button");
+    open.textContent = "Open";
+    open.addEventListener("click", () => {
+      ActTabSync.openDevice(win, device);
+      win.ActPopup.close();
+    });
+    row.append(text, open);
+    rows.push(row);
+  }
+  $("sync-devices").replaceChildren(...rows);
 }
 
 function showUpdateState() {
@@ -220,6 +250,10 @@ for (let input of document.querySelectorAll("[data-pref]")) {
     Services.prefs.setBoolPref(input.dataset.pref, input.checked);
   });
 }
+$("sync-account").addEventListener("click", () => {
+  ActTabSync.openAccountSettings(win);
+  win.ActPopup.close();
+});
 $("check-updates").addEventListener("click", () => ActUpdater.check());
 $("restart-update").addEventListener("click", () => ActUpdater.restartToUpdate());
 let updateObserver = () => showUpdateState();

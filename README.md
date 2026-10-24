@@ -64,6 +64,13 @@ The first time you open it:
 - Settings, saved sites, history and downloads along the bottom of the
   sidebar, with your extensions' icons stacked up the right hand side
   instead of behind the puzzle piece menu. Popups and badges work as usual.
+- **Tabs carry over between computers.** Sign in with a Mozilla account
+  (Act menu › settings › Sync) and your open tabs, tab groups, bookmarks,
+  history, passwords and workspace names sync through Firefox Sync. On
+  another computer Act offers to open your tabs once they arrive, pinned
+  tabs and tab groups included, and the Sync section lists each computer's
+  tabs to open later. Which workspace each tab was in doesn't carry over
+  yet: they open in the current one.
 - uBlock Origin and Bitwarden come preinstalled. They're normal add-ons, you
   can remove them.
 - **Passkeys go to Bitwarden.** When a site asks for a passkey, Bitwarden
@@ -274,6 +281,7 @@ src/
     │   ├── ActUrlbar.sys.mjs       address bar provider
     │   ├── ActExtensions.sys.mjs   the downloads + extensions row
     │   ├── ActPasskeys.sys.mjs     sends passkey requests to Bitwarden
+    │   ├── ActTabSync.sys.mjs      opens other computers' tabs and groups
     │   ├── ActAgents.sys.mjs       starts the agent server on demand
     │   ├── ActUpdater.sys.mjs      self-updates from GitHub releases
     │   ├── ActFraming.sys.mjs      lets any site be framed
