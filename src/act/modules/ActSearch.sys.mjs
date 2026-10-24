@@ -21,6 +21,7 @@ export const ENGINE_NAME = "Actuent";
 const ENGINE_HOST = "search.actuent.invalid";
 const ENGINE_URL = `https://${ENGINE_HOST}/?q={searchTerms}`;
 export const RESULTS_URL = "resource://act-page/search/search.html";
+const ICON_URL = "chrome://act/content/icons/logo-64.png";
 const ENABLED_PREF = "act.actuent.searchEngine";
 
 function enabled() {
@@ -84,13 +85,28 @@ export const ActSearch = {
     await lazy.SearchService.init();
     let engine = lazy.SearchService.getEngineByName(ENGINE_NAME);
     if (enabled() && !engine) {
-      await lazy.SearchService.addUserEngine({
+      engine = await lazy.SearchService.addUserEngine({
         name: ENGINE_NAME,
         url: ENGINE_URL,
         alias: "@actuent",
       });
     } else if (!enabled() && engine) {
       await lazy.SearchService.removeEngine(engine);
+      return;
     }
+    if (engine && !(await engine.getIconURL(16))) {
+      await this._setIcon(engine);
+    }
+  },
+
+  // The Actuent logo in the engine picker. User engines only take data: or
+  // web addresses for their icon, so the logo goes in as a data: URL.
+  async _setIcon(engine) {
+    let bytes = new Uint8Array(await (await fetch(ICON_URL)).arrayBuffer());
+    let binary = "";
+    for (let byte of bytes) {
+      binary += String.fromCharCode(byte);
+    }
+    await (engine.wrappedJSObject || engine).changeIcon(`data:image/png;base64,${btoa(binary)}`);
   },
 };
