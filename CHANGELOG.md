@@ -6,7 +6,7 @@ updates (turn that off with `act.changelog.enabled` in about:config).
 ## 0.7.1
 
 - Private windows look different: a deep purple frame and a Private badge at the top of the sidebar, so you can't mistake one for a normal window. Open one from the new button at the bottom of the sidebar (or ⇧⌘P / Ctrl+Shift+P).
-- In full screen on a Mac the window keeps its tinted look instead of turning flat grey, and keeps its rounded page edges.
+- Full screen looks just like the window, only bigger: the see-through frame, the rounded page edges, and the toolbar and sidebar stay put instead of sliding away.
 
 ## 0.7.0
 

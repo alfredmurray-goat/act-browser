@@ -84,6 +84,8 @@ pref("sidebar.main.tools", "history,bookmarks");
 
 // Downloads sit at the bottom of the sidebar, always visible.
 pref("browser.download.autohideButton", false);
+// Full screen is the window, just bigger: the toolbar and sidebar stay put.
+pref("browser.fullscreen.autohide", false);
 
 // Closing the last tab leaves a new tab instead of closing the window.
 pref("browser.tabs.closeWindowWithLastTab", false);
