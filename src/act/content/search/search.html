@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'">
+  <meta name="referrer" content="no-referrer">
+  <title>Actuent</title>
+  <link rel="icon" href="../icons/logo-64.png">
+  <link rel="stylesheet" href="../shared/act.css">
+  <link rel="stylesheet" href="search.css">
+  <script type="module" src="search.mjs"></script>
+</head>
+<body>
+  <header id="bar">
+    <a id="home" href="search.html" title="Actuent"><img src="../icons/logo-64.png" alt="Actuent"></a>
+    <form id="form" role="search">
+      <svg class="search-icon" viewBox="0 0 16 16" aria-hidden="true">
+        <path d="M7 1.75a5.25 5.25 0 0 1 4.16 8.46l3.07 3.07a.75.75 0 1 1-1.06 1.06l-3.07-3.07A5.25 5.25 0 1 1 7 1.75zm0 1.5a3.75 3.75 0 1 0 0 7.5 3.75 3.75 0 0 0 0-7.5z"/>
+      </svg>
+      <input id="q" type="search" autocomplete="off" spellcheck="false" aria-label="Search Actuent"
+             placeholder="Places, products, events, sites…">
+    </form>
+  </header>
+
+  <nav id="filters" aria-label="Filters">
+    <button type="button" class="pill" data-kind="web" aria-pressed="true">All</button>
+    <button type="button" class="pill" data-kind="news" aria-pressed="false">News</button>
+    <span class="divider"></span>
+    <button type="button" class="pill" id="open-now" aria-pressed="false">Open now</button>
+    <label class="pill city">
+      <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.5a4.75 4.75 0 0 1 4.75 4.75c0 3.2-3.6 7.2-4.2 7.85a.75.75 0 0 1-1.1 0C6.85 13.45 3.25 9.45 3.25 6.25A4.75 4.75 0 0 1 8 1.5zm0 3a1.75 1.75 0 1 0 0 3.5 1.75 1.75 0 0 0 0-3.5z"/></svg>
+      <input id="city" type="text" placeholder="Anywhere" autocomplete="off" aria-label="City">
+    </label>
+  </nav>
+
+  <main id="page">
+    <p id="status" role="status"></p>
+    <section id="answer" hidden></section>
+    <div id="columns">
+      <div id="main"></div>
+      <aside id="side"></aside>
+    </div>
+    <section id="related" hidden></section>
+    <footer id="footer">
+      <span>Live results from <a href="https://actuent.ai">Actuent</a></span>
+      <a id="elsewhere" hidden></a>
+    </footer>
+  </main>
+</body>
+</html>

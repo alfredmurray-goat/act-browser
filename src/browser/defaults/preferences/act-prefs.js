@@ -11,6 +11,8 @@ pref("act.actuent.enabled", true);
 pref("act.actuent.endpoint", "https://api.actuent.ai");
 pref("act.actuent.urlbar", true);
 pref("act.actuent.urlbar.maxResults", 3);
+// Actuent in the search engine picker, with its own results page.
+pref("act.actuent.searchEngine", true);
 // Look up what you can do on the site you're visiting (booking, pricing...).
 // Only the domain is sent, never the full URL. Skipped in private windows.
 pref("act.actuent.siteActions", true);

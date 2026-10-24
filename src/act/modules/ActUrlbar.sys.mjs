@@ -2,9 +2,10 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-// Actuent results in the address bar dropdown. Type "coffee near the
-// station" or "notion pricing" and the matching sites show up next to your
-// history and search suggestions.
+// Actuent in the address bar dropdown. There's always a "Search Actuent"
+// row (it opens Actuent's results page, no request needed), and once you
+// stop typing for a moment the matching sites show up under it: "coffee near
+// the station", "notion pricing".
 
 import {
   SkippableTimer,
@@ -12,6 +13,7 @@ import {
 } from "moz-src:///browser/components/urlbar/UrlbarUtils.sys.mjs";
 import { ActPrefs } from "resource://act/ActPrefs.sys.mjs";
 import { Actuent } from "resource://act/Actuent.sys.mjs";
+import { ActSearch } from "resource://act/ActSearch.sys.mjs";
 
 const lazy = {};
 ChromeUtils.defineESModuleGetters(lazy, {
@@ -21,9 +23,13 @@ ChromeUtils.defineESModuleGetters(lazy, {
   UrlbarShared: "chrome://browser/content/urlbar/UrlbarShared.mjs",
 });
 
-// Wait for the user to stop typing before asking Actuent anything.
-const DEBOUNCE_MS = 200;
+// Wait for the user to stop typing before asking Actuent anything. The free
+// tier allows 20 requests a minute: asking on every short pause used them
+// up within a few searches, and then the results disappeared.
+const DEBOUNCE_MS = 450;
 const MIN_CHARS = 4;
+// The "Search Actuent" row costs nothing, so it shows from the start.
+const MIN_CHARS_ROW = 1;
 
 function looksLikeUrl(text) {
   return (
@@ -57,7 +63,7 @@ class ActProviderActuent extends UrlbarProvider {
     }
     let text = queryContext.trimmedSearchString;
     return (
-      text.length >= MIN_CHARS &&
+      text.length >= MIN_CHARS_ROW &&
       !looksLikeUrl(text) &&
       !queryContext.restrictSource
     );
@@ -65,6 +71,29 @@ class ActProviderActuent extends UrlbarProvider {
 
   async startQuery(queryContext, addCallback) {
     let instance = this.queryInstance;
+    let text = queryContext.trimmedSearchString;
+    let { RESULT_TYPE, RESULT_SOURCE } = lazy.UrlbarShared;
+
+    // With Actuent as the search engine the first row already is this.
+    if (!ActSearch.isDefaultEngine()) {
+      addCallback(
+        this,
+        new lazy.UrlbarResult({
+          type: RESULT_TYPE.URL,
+          source: RESULT_SOURCE.OTHER_NETWORK,
+          suggestedIndex: 1,
+          payload: {
+            url: ActSearch.resultsUrl(text),
+            title: `Search Actuent for “${text}”`,
+            icon: "chrome://act/content/icons/logo-64.png",
+          },
+        })
+      );
+    }
+    if (text.length < MIN_CHARS) {
+      return;
+    }
+
     await new SkippableTimer({
       name: "ActProviderActuent",
       time: DEBOUNCE_MS,
@@ -94,7 +123,6 @@ class ActProviderActuent extends UrlbarProvider {
       return;
     }
 
-    let { RESULT_TYPE, RESULT_SOURCE } = lazy.UrlbarShared;
     let index = 0;
     for (let site of result.sites.slice(0, max)) {
       if (!site.homeUrl) {
@@ -115,7 +143,7 @@ class ActProviderActuent extends UrlbarProvider {
           // Fixed slots right under the first row. Without them, a profile
           // with lots of history fills the list before these arrive and
           // Actuent never shows up.
-          suggestedIndex: 1 + index++,
+          suggestedIndex: 2 + index++,
           payload: {
             url: site.homeUrl,
             title,

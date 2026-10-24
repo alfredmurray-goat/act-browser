@@ -17,6 +17,8 @@ const METHODS = [
   "saveSite",
   "removeSite",
   "weatherShown",
+  "icons",
+  "otherEngine",
   "wallpaper",
   "setWallpaper",
 ];

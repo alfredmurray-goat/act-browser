@@ -10,6 +10,7 @@ ChromeUtils.defineESModuleGetters(lazy, {
   ActAgents: "resource://act/ActAgents.sys.mjs",
   ActExtensions: "resource://act/ActExtensions.sys.mjs",
   ActFraming: "resource://act/ActFraming.sys.mjs",
+  ActSearch: "resource://act/ActSearch.sys.mjs",
   ActUpdater: "resource://act/ActUpdater.sys.mjs",
   ActUrlbar: "resource://act/ActUrlbar.sys.mjs",
   CustomizableUI:
@@ -191,7 +192,8 @@ export const ActStartup = {
           esModuleURI: "resource://act/actors/ActNewTabChild.sys.mjs",
           events: { DOMDocElementInserted: { capture: true } },
         },
-        matches: [`${NEWTAB_URL.replace(/[^/]*$/, "")}*`],
+        // The start page, and Actuent's results page (ActSearch).
+        matches: ["resource://act-page/newtab/*", "resource://act-page/search/*"],
         messageManagerGroups: ["browsers"],
         safeForUntrustedWebProcess: true,
       });
@@ -228,6 +230,12 @@ export const ActStartup = {
       lazy.ActUpdater.init();
     } catch (e) {
       console.error("Act: updater", e);
+    }
+
+    try {
+      lazy.ActSearch.init();
+    } catch (e) {
+      console.error("Act: Actuent search engine", e);
     }
 
     this._applyNewTab();

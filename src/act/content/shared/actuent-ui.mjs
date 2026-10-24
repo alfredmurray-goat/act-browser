@@ -56,67 +56,102 @@ function linkCard(url, className) {
   return card;
 }
 
+function hueOf(text) {
+  let hash = 0;
+  for (let char of text) {
+    hash = (hash * 31 + char.codePointAt(0)) % 360;
+  }
+  return hash;
+}
+
+// The site's icon if the browser has one (options.icons, domain -> url),
+// otherwise its first letter in a color of its own.
+function siteIcon(domain, options) {
+  let tile = el("span", "site-icon");
+  let url = options.icons?.[domain];
+  if (url) {
+    let img = el("img");
+    img.src = url;
+    img.alt = "";
+    tile.append(img);
+  } else {
+    tile.classList.add("lettered");
+    tile.style.setProperty("--hue", hueOf(domain || "?"));
+    tile.textContent = (domain || "?")[0].toUpperCase();
+  }
+  return tile;
+}
+
 function siteCard(site, options) {
   let card = linkCard(site.url, "result site");
+  card.append(siteIcon(site.domain, options));
+
+  let body = el("div", "result-body");
   let top = el("div", "result-top");
-  let iconUrl = options.favicon?.(site.domain);
-  if (iconUrl) {
-    let icon = el("img", "favicon");
-    icon.src = iconUrl;
-    icon.alt = "";
-    icon.addEventListener("error", () => icon.remove(), { once: true });
-    top.append(icon);
-  }
   top.append(el("span", "result-title", site.name));
   if (site.openNow === true) {
     top.append(el("span", "badge open", "Open"));
   } else if (site.openNow === false) {
     top.append(el("span", "badge closed", "Closed"));
   }
-  card.append(top);
+  body.append(top);
 
   let meta = [site.domain, site.category, site.city].filter(Boolean).join(" · ");
-  card.append(el("div", "result-meta", meta));
+  body.append(el("div", "result-meta", meta));
   if (site.summary && site.summary != site.name) {
-    card.append(el("p", "result-summary", site.summary));
+    body.append(el("p", "result-summary", site.summary));
   }
 
-  let actions = site.actions.filter(a => a.id != "visit").slice(0, 5);
+  let actions = site.actions.filter(a => a.id != "visit").slice(0, 3);
   if (actions.length) {
-    let chips = el("div", "chips");
+    let links = el("div", "result-actions");
     for (let action of actions) {
-      let chip = el("button", "chip", action.name);
-      chip.title = action.description;
-      chip.addEventListener("click", e => {
+      let button = el("button", "result-action", action.name);
+      button.type = "button";
+      button.title = action.description;
+      button.addEventListener("click", e => {
         e.preventDefault();
         e.stopPropagation();
         options.openLink(action.url || site.homeUrl || site.url);
       });
-      chips.append(chip);
+      links.append(button);
     }
-    card.append(chips);
+    body.append(links);
   }
+  card.append(body);
   return card;
 }
 
-function productRow(product) {
+function productRow(product, options) {
   let row = linkCard(product.url, "result product");
-  row.append(el("span", "result-title", product.name));
-  row.append(el("span", "price", formatPrice(product.price, product.currency)));
+  row.append(siteIcon(product.domain, options));
+  let body = el("div", "result-body");
+  body.append(el("span", "result-title", product.name));
   let meta = product.domain + (product.available ? "" : " · out of stock");
-  row.append(el("div", "result-meta", meta));
+  body.append(el("div", "result-meta", meta));
+  row.append(body, el("span", "price", formatPrice(product.price, product.currency)));
   return row;
 }
 
 function eventRow(event) {
   let row = linkCard(event.url, "result event");
-  row.append(el("span", "result-title", event.name));
+  let date = new Date(event.start);
+  let cal = el("span", "event-date");
+  if (!isNaN(date)) {
+    cal.append(
+      el("span", "event-month", date.toLocaleDateString(undefined, { month: "short" })),
+      el("span", "event-day", String(date.getDate()))
+    );
+  }
+  let body = el("div", "result-body");
+  body.append(el("span", "result-title", event.name));
+  let when = formatDate(event.start);
+  let where = [event.venue, event.city].filter(Boolean).join(", ");
+  body.append(el("div", "result-meta", [when, where].filter(Boolean).join(" · ")));
+  row.append(cal, body);
   if (event.price != null) {
     row.append(el("span", "price", formatPrice(event.price, event.currency)));
   }
-  let when = formatDate(event.start);
-  let where = [event.venue, event.city].filter(Boolean).join(", ");
-  row.append(el("div", "result-meta", [when, where].filter(Boolean).join(" · ")));
   return row;
 }
 
@@ -134,7 +169,8 @@ function group(title, nodes) {
  * @param {object} options
  * @param {Function} options.openLink   opens a url in a tab
  * @param {Function} options.onSearch   runs a new search (related queries)
- * @param {Function} [options.favicon]  domain -> icon url, or nothing
+ * @param {object} [options.icons]  domain -> icon url, for the ones the
+ *   browser has
  * @returns {string} a status line for the caller to show, or ""
  */
 export function renderResults(container, result, options) {
@@ -158,7 +194,7 @@ export function renderResults(container, result, options) {
     groups.push(group("Events", result.events.map(eventRow)));
   }
   if (result.products.length) {
-    groups.push(group("Products", result.products.map(productRow)));
+    groups.push(group("Products", result.products.map(p => productRow(p, options))));
   }
   if (result.sites.length) {
     groups.push(group("Places & sites", result.sites.map(s => siteCard(s, options))));
@@ -167,6 +203,7 @@ export function renderResults(container, result, options) {
     let chips = el("div", "chips");
     for (let related of result.related) {
       let chip = el("button", "chip", related);
+      chip.type = "button";
       chip.addEventListener("click", () => options.onSearch(related));
       chips.append(chip);
     }

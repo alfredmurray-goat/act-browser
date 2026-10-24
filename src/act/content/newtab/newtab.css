@@ -129,11 +129,20 @@ body {
   background: transparent;
 }
 
+/* Weather in the top right, then the greeting, search and sites a third of
+   the way down. */
+#topbar {
+  display: flex;
+  justify-content: flex-end;
+  min-height: 16px;
+  padding: 16px 16px 0;
+}
+
 main {
   flex: 1;
-  width: min(680px, 100% - 48px);
+  width: min(720px, 100% - 48px);
   margin: 0 auto;
-  padding-top: 18vh;
+  padding: max(4vh, 24px) 0 96px;
 }
 
 #hero {
@@ -457,21 +466,14 @@ main {
   }
 }
 
-/* Top right corner, like the weather on Firefox's own new tab page. */
-#weather {
-  position: absolute;
-  top: 16px;
-  inset-inline-end: 16px;
-  z-index: 1;
+#weather[hidden] {
+  display: none;
 }
 
-/* Not enough room beside the greeting: let it sit above everything. */
+/* Narrow windows: weather centered above everything. */
 @media (max-width: 760px) {
-  #weather {
-    position: static;
-    display: flex;
+  #topbar {
     justify-content: center;
-    padding-top: 16px;
   }
 }
 
@@ -590,3 +592,62 @@ main {
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23888'%3E%3Cpath d='M7.25 3h1.5v4.25H13v1.5H8.75V13h-1.5V8.75H3v-1.5h4.25z'/%3E%3C/svg%3E") center / 16px no-repeat,
     color-mix(in srgb, currentColor 8%, transparent);
 }
+
+/* --- Sites ----------------------------------------------------------------- */
+
+#below {
+  margin-top: 40px;
+}
+
+#saved-heading,
+#top-sites-heading {
+  margin: 0 0 6px;
+  padding-inline: 4px;
+  font-size: 0.78em;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+#top-sites-heading {
+  margin-top: 22px;
+}
+
+.site-grid {
+  grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
+  gap: 4px;
+
+  .site .name {
+    max-width: 100%;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    font-size: 0.9em;
+  }
+
+  .tile.lettered {
+    background: hsl(var(--hue) 55% 50% / 0.22);
+    border-color: hsl(var(--hue) 55% 60% / 0.3);
+
+    .letter {
+      color: hsl(var(--hue) 70% 75%);
+    }
+  }
+
+  .add-site .tile {
+    border-style: dashed;
+    background: transparent;
+  }
+
+  .add-site .name {
+    color: var(--muted);
+  }
+}
+
+@media (prefers-color-scheme: light) {
+  .site-grid .tile.lettered .letter {
+    color: hsl(var(--hue) 60% 38%);
+  }
+}
+

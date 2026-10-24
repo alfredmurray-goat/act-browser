@@ -319,6 +319,14 @@ function hostOf(url) {
   }
 }
 
+function hueOf(text) {
+  let hash = 0;
+  for (let char of text) {
+    hash = (hash * 31 + char.codePointAt(0)) % 360;
+  }
+  return hash;
+}
+
 // One tile. `action` is the small button in its corner: remove for saved
 // sites, save for frequent ones.
 function siteTile(site, action) {
@@ -333,7 +341,11 @@ function siteTile(site, action) {
     icon.alt = "";
     tile.append(icon);
   } else {
-    tile.append(el("span", "letter", (host[0] || "?").toUpperCase()));
+    // No icon saved for the site: its first letter, in a color of its own.
+    let letter = el("span", "letter", (host.replace(/^www\./, "")[0] || "?").toUpperCase());
+    tile.style.setProperty("--hue", hueOf(host));
+    tile.classList.add("lettered");
+    tile.append(letter);
   }
   link.append(tile, el("span", "name", site.title || host));
 
@@ -424,28 +436,6 @@ function weatherUnits(pref) {
   return /^en-(US|LR|MM)$/i.test(pageLocale()) ? "imperial" : "metric";
 }
 
-// A line under the greeting, from the data Rejn posts. The widget itself,
-// with Rejn's credit, is on the same page.
-function showWeatherLine(data, units) {
-  let shown = data.shown || {};
-  if (typeof shown.tempC != "number") {
-    return;
-  }
-  let temp =
-    units == "imperial"
-      ? `${Math.round((shown.tempC * 9) / 5 + 32)}°F`
-      : `${Math.round(shown.tempC)}°`;
-  let parts = [temp];
-  if (shown.conditionText) {
-    parts.push(String(shown.conditionText).toLowerCase());
-  }
-  let place = data.place?.name;
-  $("weather-line").textContent = place
-    ? `${parts.join(", ")} in ${place}`
-    : parts.join(", ");
-  $("weather-line").hidden = false;
-}
-
 function setupWeather() {
   let options = state?.weather;
   let box = $("weather");
@@ -453,7 +443,6 @@ function setupWeather() {
     weather?.destroy();
     weather = null;
     box.hidden = true;
-    $("weather-line").hidden = true;
     return;
   }
   let units = weatherUnits(options.units);
@@ -467,11 +456,8 @@ function setupWeather() {
     // Rejn's own one-row size. Smaller clips the card.
     width: 340,
     height: 170,
-    onWeather: data => {
-      showWeatherLine(data, units);
-      // The sidebar shows it too, with Rejn's credit (act-corner.js).
-      api.weatherShown(data).catch(() => {});
-    },
+    // The sidebar shows it too, with Rejn's credit (act-corner.js).
+    onWeather: data => api.weatherShown(data).catch(() => {}),
   };
   if (weather) {
     weather.update(props);
