@@ -6,7 +6,7 @@
 <head>
   <meta charset="utf-8">
   <meta http-equiv="Content-Security-Policy"
-        content="default-src 'self'; img-src 'self' data:; frame-src https://rejn.app https://www.rejn.app; style-src 'self' 'unsafe-inline'; script-src 'self'">
+        content="default-src 'self'; img-src 'self' data: blob:; frame-src https://rejn.app https://www.rejn.app; style-src 'self' 'unsafe-inline'; script-src 'self'">
   <meta name="referrer" content="no-referrer">
   <title>New Tab</title>
   <link rel="icon" href="../icons/logo-64.png">
@@ -51,5 +51,20 @@
       <nav id="top-sites" class="site-grid" aria-label="Frequently visited"></nav>
     </div>
   </main>
+
+  <!-- Bottom left: pick a wallpaper. -->
+  <div id="customize">
+    <button id="customize-button" type="button" aria-haspopup="dialog"
+            aria-expanded="false" title="Change wallpaper">
+      <svg viewBox="0 0 16 16" aria-hidden="true">
+        <path d="M13.9 1.1a1.6 1.6 0 0 1 0 2.3L8.6 8.7 7.3 7.4l5.3-5.3a1.6 1.6 0 0 1 1.3-1zM6.4 8.3l1.3 1.3-.4.4a2.2 2.2 0 0 1-1.5.7c0 1.9-1.6 3.3-3.6 3.3H1l.6-.9c.4-.6.5-1.1.5-1.8 0-1.5 1.2-2.7 2.7-2.7.4-.3.7-.6 1.2-.6z"/>
+      </svg>
+    </button>
+    <div id="customize-panel" role="dialog" aria-label="Wallpaper" hidden>
+      <h2>Wallpaper</h2>
+      <div id="wallpapers" role="radiogroup" aria-label="Wallpaper"></div>
+      <input id="wallpaper-file" type="file" accept="image/png,image/jpeg,image/webp,image/gif" hidden>
+    </div>
+  </div>
 </body>
 </html>

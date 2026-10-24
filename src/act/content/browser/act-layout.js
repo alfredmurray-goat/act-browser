@@ -53,9 +53,18 @@ var ActLayout = {
     document.getElementById("sidebar-container").prepend(header);
   },
 
-  // Bottom of the sidebar: settings, bookmarks and history, then downloads
-  // (act-extensions.js). Extension icons stack up from its right end.
+  // Bottom of the sidebar, a mirrored L: settings, saved sites, history and
+  // downloads (act-extensions.js) along the bottom, and above it the dock:
+  // extension icons stacked up the right hand side, and the corner next to
+  // them (act-corner.js).
   _buildFooter() {
+    let dock = document.createXULElement("hbox");
+    dock.id = "act-sidebar-dock";
+    dock.setAttribute("align", "end");
+    let corner = document.createElementNS("http://www.w3.org/1999/xhtml", "div");
+    corner.id = "act-corner";
+    dock.append(corner);
+
     let footer = document.createXULElement("hbox");
     footer.id = "act-sidebar-footer";
     footer.setAttribute("align", "center");
@@ -78,13 +87,20 @@ var ActLayout = {
         "act-tool-bookmarks",
         "Saved sites (bookmarks)",
         "chrome://browser/skin/bookmark-hollow.svg",
-        () => SidebarController.toggle("viewBookmarksSidebar")
+        e => this._showPanel("PanelUI-bookmarks", e.target)
       ),
-      button("act-tool-history", "History", "chrome://browser/skin/history.svg", () =>
-        SidebarController.toggle("viewHistorySidebar")
+      button("act-tool-history", "History", "chrome://browser/skin/history.svg", e =>
+        this._showPanel("PanelUI-history", e.target)
       )
     );
-    document.getElementById("sidebar-container").append(footer);
+    document.getElementById("sidebar-container").append(dock, footer);
+  },
+
+  // Saved sites and history open as a small panel above their button, the
+  // same lists as in the app menu, rather than in Firefox's side panel.
+  // Clicking the button again closes it, like any panel.
+  _showPanel(viewId, button) {
+    PanelUI.showSubView(viewId, button);
   },
 
   // Firefox's own sidebar puts bookmarks, history and a settings button

@@ -467,7 +467,11 @@ function setupWeather() {
     // Rejn's own one-row size. Smaller clips the card.
     width: 340,
     height: 170,
-    onWeather: data => showWeatherLine(data, units),
+    onWeather: data => {
+      showWeatherLine(data, units);
+      // The sidebar shows it too, with Rejn's credit (act-corner.js).
+      api.weatherShown(data).catch(() => {});
+    },
   };
   if (weather) {
     weather.update(props);
@@ -476,6 +480,105 @@ function setupWeather() {
     box.append(weather.element);
   }
   box.hidden = false;
+}
+
+// --- Wallpaper ----------------------------------------------------------------------
+
+// The presets are CSS (html[data-wallpaper] in newtab.css).
+const WALLPAPERS = [
+  { id: "glow", name: "Glow" },
+  { id: "aurora", name: "Aurora" },
+  { id: "sunset", name: "Sunset" },
+  { id: "ocean", name: "Ocean" },
+  { id: "forest", name: "Forest" },
+  { id: "graphite", name: "Graphite" },
+];
+const MAX_WALLPAPER_MB = 15;
+
+let wallpaperUrl = null;
+
+function applyWallpaper(wallpaper) {
+  let id = wallpaper?.id || "glow";
+  document.documentElement.dataset.wallpaper = id;
+  if (wallpaperUrl) {
+    URL.revokeObjectURL(wallpaperUrl);
+    wallpaperUrl = null;
+  }
+  if (id == "custom" && wallpaper.image) {
+    let blob = new Blob([wallpaper.image.bytes], { type: wallpaper.image.type });
+    wallpaperUrl = URL.createObjectURL(blob);
+    document.documentElement.style.setProperty("--wallpaper-image", `url("${wallpaperUrl}")`);
+  } else {
+    document.documentElement.style.removeProperty("--wallpaper-image");
+  }
+  for (let option of $("wallpapers").children) {
+    option.setAttribute("aria-checked", String(option.dataset.id == id));
+  }
+}
+
+async function chooseWallpaper(id, file) {
+  let bytes = null;
+  let type = "";
+  if (file) {
+    if (file.size > MAX_WALLPAPER_MB * 1024 * 1024) {
+      alert(`That picture is too big, pick one under ${MAX_WALLPAPER_MB} MB.`);
+      return;
+    }
+    bytes = new Uint8Array(await file.arrayBuffer());
+    type = file.type;
+  }
+  applyWallpaper(await api.setWallpaper(id, bytes, type));
+}
+
+function buildWallpaperPicker() {
+  let option = (id, name, extraClass = "") => {
+    let button = el("button", `wallpaper ${extraClass}`.trim());
+    button.type = "button";
+    button.title = name;
+    button.dataset.id = id;
+    button.setAttribute("role", "radio");
+    button.setAttribute("aria-label", name);
+    let swatch = el("span", "swatch");
+    swatch.dataset.preview = id;
+    button.append(swatch);
+    return button;
+  };
+  let presets = WALLPAPERS.map(w => option(w.id, w.name));
+  presets.forEach(b => b.addEventListener("click", () => chooseWallpaper(b.dataset.id)));
+  let custom = option("custom", "Your own picture…", "custom");
+  custom.addEventListener("click", () => $("wallpaper-file").click());
+  $("wallpapers").replaceChildren(...presets, custom);
+
+  $("wallpaper-file").addEventListener("change", e => {
+    let file = e.target.files[0];
+    e.target.value = "";
+    if (file) {
+      chooseWallpaper("custom", file);
+    }
+  });
+
+  let panel = $("customize-panel");
+  let button = $("customize-button");
+  let setOpen = open => {
+    panel.hidden = !open;
+    button.setAttribute("aria-expanded", String(open));
+  };
+  button.addEventListener("click", () => setOpen(panel.hidden));
+  document.addEventListener("click", e => {
+    if (!panel.hidden && !e.target.closest("#customize")) {
+      setOpen(false);
+    }
+  });
+  document.addEventListener("keydown", e => {
+    if (e.key == "Escape" && !panel.hidden) {
+      setOpen(false);
+      button.focus();
+    }
+  });
+}
+
+async function loadWallpaper() {
+  applyWallpaper(await api.wallpaper().catch(() => null));
 }
 
 // --- State & wiring -----------------------------------------------------------------
@@ -504,6 +607,7 @@ if (api) {
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState == "visible") {
       loadState();
+      loadWallpaper();
     }
   });
   matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () =>
@@ -516,6 +620,8 @@ if (api) {
     $("add-site").hidden = true;
   });
 
+  buildWallpaperPicker();
+  loadWallpaper();
   loadState();
   renderSites();
   // No autofocus here: a new tab focuses the address bar, and grabbing focus

@@ -25,7 +25,7 @@ var ActExtensionsBar = {
     // Extension icons in a column up the right hand side, sitting on the
     // right end of the bottom row.
     this.toolbar = ActExtensions.createToolbar(document);
-    document.getElementById("act-sidebar-footer").before(this.toolbar);
+    document.getElementById("act-sidebar-dock").append(this.toolbar);
 
     CustomizableUI.registerToolbarNode(this.tools);
     CustomizableUI.registerToolbarNode(this.toolbar);

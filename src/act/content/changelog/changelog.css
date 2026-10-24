@@ -1,0 +1,112 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+/* Same glow as the start page. */
+:root {
+  --page: #f6f4fd;
+  --glow-1: rgba(150, 120, 255, 0.35);
+  --glow-2: rgba(95, 60, 220, 0.22);
+  --card: rgba(255, 255, 255, 0.72);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --page: #120f1f;
+    --glow-1: rgba(139, 108, 240, 0.38);
+    --glow-2: rgba(75, 47, 201, 0.32);
+    --card: rgba(40, 34, 60, 0.6);
+  }
+}
+
+html {
+  min-height: 100%;
+  background:
+    radial-gradient(1100px 700px at 15% -10%, var(--glow-1), transparent 65%),
+    radial-gradient(900px 650px at 105% 110%, var(--glow-2), transparent 60%),
+    var(--page);
+  background-attachment: fixed;
+}
+
+body {
+  background: transparent;
+  font-size: 14.5px;
+}
+
+main {
+  width: min(640px, 100% - 32px);
+  margin: 0 auto;
+  padding: 72px 0 96px;
+}
+
+header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 32px;
+
+  .logo {
+    width: 56px;
+    height: 56px;
+  }
+
+  h1 {
+    margin: 0;
+    font-size: 26px;
+    font-weight: 650;
+  }
+
+  p {
+    margin: 2px 0 0;
+    color: var(--muted);
+  }
+}
+
+.release {
+  margin-bottom: 14px;
+  padding: 18px 22px;
+  border-radius: 16px;
+  background: var(--card);
+  border: 1px solid color-mix(in srgb, currentColor 8%, transparent);
+
+  h2 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 0 8px;
+    font-size: 16px;
+  }
+
+  ul {
+    margin: 0;
+    padding-inline-start: 20px;
+  }
+
+  li + li {
+    margin-top: 6px;
+  }
+
+  p {
+    margin: 8px 0 0;
+  }
+
+  code {
+    font-size: 0.9em;
+    padding: 1px 5px;
+    border-radius: 5px;
+    background: color-mix(in srgb, currentColor 9%, transparent);
+  }
+}
+
+.release:not(.latest) {
+  opacity: 0.8;
+}
+
+.badge {
+  padding: 1px 8px;
+  border-radius: 99px;
+  background: var(--accent);
+  color: white;
+  font-size: 11px;
+  font-weight: 600;
+}
