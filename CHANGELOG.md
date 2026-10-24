@@ -3,6 +3,10 @@
 What's new in each version of Act Browser. The browser shows this after it
 updates (turn that off with `act.changelog.enabled` in about:config).
 
+## 0.6.3
+
+- Bitwarden comes pre-installed (from addons.mozilla.org, and you can remove it). It can save and use passkeys, which the Mac's own Touch ID passkeys can't do yet in Act Browser.
+
 ## 0.6.2
 
 - Actuent's own logo in the search engine menu, on its results page and in suggestions.

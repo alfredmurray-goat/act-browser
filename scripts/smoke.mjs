@@ -172,6 +172,10 @@ try {
   check(report.newTabPage?.startsWith("resource://act-page/newtab/"), `new tab is ${report.newTabPage}`);
   check(report.bridge, "new tab bridge missing");
   check(report.addons?.includes("uBlock0@raymondhill.net"), "uBlock Origin isn't installed");
+  check(
+    report.addons?.includes("{446900e4-71c2-419f-a6a7-df9c091e268b}"),
+    "Bitwarden isn't installed"
+  );
 } catch (e) {
   failures.push(e.message);
 } finally {
