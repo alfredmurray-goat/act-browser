@@ -76,6 +76,11 @@ function pressed(id) {
   return $(id).getAttribute("aria-pressed") == "true";
 }
 
+function queryIdea(text) {
+  $("query").value = text;
+  search(text);
+}
+
 // Icons the browser already has for these sites (from your history).
 async function iconsFor(domains) {
   let icons = {};
@@ -222,7 +227,21 @@ $("city").addEventListener("keydown", e => {
   }
 });
 for (let chip of ideas.querySelectorAll(".chip")) {
-  chip.addEventListener("click", () => search(chip.textContent));
+  chip.addEventListener("click", () => {
+    $("query").value = chip.textContent.trim();
+    search(chip.textContent.trim());
+  });
+}
+
+for (let card of ideas.querySelectorAll(".quick-card")) {
+  card.addEventListener("click", () => {
+    let title = card.querySelector(".quick-title")?.textContent || "";
+    if (!title) {
+      return;
+    }
+    $("query").value = title;
+    search(title);
+  });
 }
 $("see-all").addEventListener("click", () => {
   let query = $("query").value.trim();

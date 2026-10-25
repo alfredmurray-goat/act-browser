@@ -3,6 +3,10 @@
 What's new in each version of Act Browser. The browser shows this after it
 updates (turn that off with `act.changelog.enabled` in about:config).
 
+## 0.7.3
+
+- Explore gets a full redesign: new header with Act Explore branding, glowing search bar with quick action button, pill filters, and a card-based quick ideas grid powered by Actuent.
+
 ## 0.7.2
 
 - Explore looks sharper: a cleaner header, bolder search box, friendlier filters and chips, and a nicer empty state.

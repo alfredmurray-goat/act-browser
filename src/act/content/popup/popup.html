@@ -15,56 +15,108 @@
 <body>
   <header id="topbar">
     <div class="brand">
-      <img class="logo" src="chrome://act/content/icons/logo-64.png" alt="">
-      <span id="heading">Explore</span>
+      <div class="brand-mark">
+        <img class="logo" src="chrome://act/content/icons/logo-64.png" alt="">
+      </div>
+      <span id="heading">Act Explore</span>
     </div>
-    <button class="icon-button" id="toggle-settings" title="Settings">
-      <img src="chrome://act/content/icons/settings.svg" alt="">
-    </button>
+    <div class="topbar-actions">
+      <button class="icon-button" id="toggle-settings" title="Settings">
+        <img src="chrome://act/content/icons/settings.svg" alt="">
+      </button>
+    </div>
   </header>
 
   <section id="view-explore" class="view">
-    <div class="explore-hero">
-      <h1 class="hero-title">Discover the live web</h1>
-      <p class="hero-subtitle">Ask for places, products, events and more</p>
+    <div class="explore-header">
+      <div class="explore-badge">
+        <span class="badge-dot"></span>
+        <span>Powered by Actuent</span>
+      </div>
+      <h1 class="explore-title">Search the live web</h1>
+      <p class="explore-subtitle">Real-time results for places, products, events &amp; more</p>
     </div>
     <form id="explore-form">
       <div id="querybox">
-        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M7 1.75a5.25 5.25 0 0 1 4.16 8.46l3.07 3.07a.75.75 0 1 1-1.06 1.06l-3.07-3.07A5.25 5.25 0 1 1 7 1.75zm0 1.5a3.75 3.75 0 1 0 0 7.5 3.75 3.75 0 0 0 0-7.5z"/></svg>
-        <input id="query" type="search" placeholder="Search the live web…" autocomplete="off">
+        <svg class="search-icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M7 1.75a5.25 5.25 0 0 1 4.16 8.46l3.07 3.07a.75.75 0 1 1-1.06 1.06l-3.07-3.07A5.25 5.25 0 1 1 7 1.75zm0 1.5a3.75 3.75 0 1 0 0 7.5 3.75 3.75 0 0 0 0-7.5z"/></svg>
+        <input id="query" type="search" placeholder="Ask anything from the web..." autocomplete="off">
+        <button class="search-go" type="submit" aria-label="Search">
+          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8.22 2.97a.75.75 0 0 1 1.06 0l4.25 4.25a.75.75 0 0 1 0 1.06l-4.25 4.25a.75.75 0 0 1-1.06-1.06l2.97-2.97H3.75a.75.75 0 0 1 0-1.5h7.44L8.22 4.03a.75.75 0 0 1 0-1.06z"/></svg>
+        </button>
       </div>
       <div class="filters">
-        <button type="button" class="pill" id="open-now" aria-pressed="false">
-          <svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.25"/><circle cx="8" cy="8" r="2.5" fill="currentColor" opacity="0.5"/></svg>
+        <button type="button" class="filter-pill" id="open-now" aria-pressed="false">
+          <svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6" opacity="0.4"/><circle cx="8" cy="8" r="2.5" fill="currentColor"/></svg>
           Open now
         </button>
-        <button type="button" class="pill" id="news" aria-pressed="false">
-          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.25 3.5A1.75 1.75 0 0 1 5 1.75h7.25a.75.75 0 0 1 .75.75v11a1.75 1.75 0 0 0-1.75-1.75H4.5c-.69 0-1.25.56-1.25 1.25v-9.5zm1.5 0v9.5c0-.138.112-.25.25-.25h6.5a.25.25 0 0 1 .25.25V3.5a.25.25 0 0 0-.25-.25H5a.25.25 0 0 0-.25.25z"/></svg>
+        <button type="button" class="filter-pill" id="news" aria-pressed="false">
+          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 3a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V4a1 1 0 0 0-1-1H4zm0 1.5h8v7.5H4V4.5zm1 1a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5zm0 2a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5zm0 2a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 0 1h-3a.5.5 0 0 1-.5-.5z"/></svg>
           News
         </button>
-        <label class="pill city">
-          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.5a4.75 4.75 0 0 1 4.75 4.75c0 3.2-3.6 7.2-4.2 7.85a.75.75 0 0 1-1.1 0C6.85 13.45 3.25 9.45 3.25 6.25A4.75 4.75 0 0 1 8 1.5zm0 3a1.75 1.75 0 1 0 0 3.5 1.75 1.75 0 0 0 0-3.5z"/></svg>
-          <input id="city" type="text" placeholder="Anywhere" autocomplete="off" aria-label="City">
+        <label class="filter-pill location-pill">
+          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.25a4.75 4.75 0 0 1 4.75 4.75c0 3.44-3.77 7.52-4.38 8.16a.75.75 0 0 1-1.07 0C6.02 13.52 2.25 9.44 2.25 6A4.75 4.75 0 0 1 8 1.25zm0 2a2.75 2.75 0 1 0 0 5.5 2.75 2.75 0 0 0 0-5.5z"/></svg>
+          <input id="city" type="text" placeholder="Anywhere" autocomplete="off" aria-label="Location">
         </label>
       </div>
     </form>
     <div id="status" class="status"></div>
-    <div id="results">
-      <div id="ideas">
-        <p class="ideas-label">Try searching for</p>
-        <div class="chips">
-          <button type="button" class="chip">What's open near me right now</button>
-          <button type="button" class="chip">Concerts this weekend</button>
-          <button type="button" class="chip">Cheapest Nike Pegasus</button>
-          <button type="button" class="chip">Notion pricing</button>
-          <button type="button" class="chip">Best brunch spots nearby</button>
-          <button type="button" class="chip">Movie times tonight</button>
+    <div id="results" class="results-scroll">
+      <div id="ideas" class="ideas">
+        <div class="ideas-header">
+          <span class="ideas-icon">✨</span>
+          <span>Quick ideas</span>
+        </div>
+        <div class="quick-grid">
+          <button type="button" class="quick-card">
+            <span class="quick-emoji">⏰</span>
+            <div class="quick-content">
+              <span class="quick-title">What's open near me</span>
+              <span class="quick-subtitle">Right now</span>
+            </div>
+          </button>
+          <button type="button" class="quick-card">
+            <span class="quick-emoji">🎵</span>
+            <div class="quick-content">
+              <span class="quick-title">Concerts this weekend</span>
+              <span class="quick-subtitle">Live music nearby</span>
+            </div>
+          </button>
+          <button type="button" class="quick-card">
+            <span class="quick-emoji">👟</span>
+            <div class="quick-content">
+              <span class="quick-title">Cheapest Nike Pegasus</span>
+              <span class="quick-subtitle">Best prices now</span>
+            </div>
+          </button>
+          <button type="button" class="quick-card">
+            <span class="quick-emoji">🍽️</span>
+            <div class="quick-content">
+              <span class="quick-title">Best brunch spots</span>
+              <span class="quick-subtitle">Top-rated nearby</span>
+            </div>
+          </button>
+          <button type="button" class="quick-card">
+            <span class="quick-emoji">🎬</span>
+            <div class="quick-content">
+              <span class="quick-title">Movie times tonight</span>
+              <span class="quick-subtitle">In theaters</span>
+            </div>
+          </button>
+          <button type="button" class="quick-card">
+            <span class="quick-emoji">💸</span>
+            <div class="quick-content">
+              <span class="quick-title">Notion pricing</span>
+              <span class="quick-subtitle">Plans &amp; deals</span>
+            </div>
+          </button>
         </div>
       </div>
     </div>
-    <footer class="attribution">
-      <span>Powered by <a href="https://actuent.ai">Actuent</a></span>
-      <button type="button" id="see-all" class="link" hidden>See all results →</button>
+    <footer class="explore-footer">
+      <div class="footer-content">
+        <span class="footer-text">Live results from <a class="footer-link" href="https://actuent.ai">Actuent</a></span>
+        <button type="button" id="see-all" class="see-all-btn" hidden>View all results <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8.22 2.97a.75.75 0 0 1 1.06 0l4.25 4.25a.75.75 0 0 1 0 1.06l-4.25 4.25a.75.75 0 0 1-1.06-1.06l2.97-2.97H3.75a.75.75 0 0 1 0-1.5h7.44L8.22 4.03a.75.75 0 0 1 0-1.06z"/></svg></button>
+      </div>
     </footer>
   </section>
 
