@@ -123,3 +123,4 @@ pref("browser.startup.page", 3);
 
 // Workspaces (their names and icons) sync along with other settings.
 pref("services.sync.prefs.sync.act.workspaces.list", true);
+pref("act.collections.list", "[]");

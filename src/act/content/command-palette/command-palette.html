@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src chrome:; img-src chrome: https: data:; style-src chrome: 'unsafe-inline';">
+  <link rel="stylesheet" href="chrome://act/content/shared/act.css">
+  <link rel="stylesheet" href="command-palette.css">
+  <script type="module" src="command-palette.mjs"></script>
+</head>
+<body>
+  <div class="palette">
+    <div class="palette-header">
+      <svg class="search-icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M7 1.75a5.25 5.25 0 0 1 4.16 8.46l3.07 3.07a.75.75 0 1 1-1.06 1.06l-3.07-3.07A5.25 5.25 0 1 1 7 1.75zm0 1.5a3.75 3.75 0 1 0 0 7.5 3.75 3.75 0 0 0 0-7.5z"/></svg>
+      <input id="palette-input" type="text" placeholder="Search tabs, history, bookmarks, workspaces, settings, actions..." autocomplete="off" spellcheck="false">
+      <kbd class="esc">Esc</kbd>
+    </div>
+    <div id="palette-results" class="palette-results"></div>
+    <div class="palette-footer">
+      <div class="footer-hints">
+        <span><kbd>↑</kbd><kbd>↓</kbd> Navigate</span>
+        <span><kbd>↵</kbd> Open</span>
+        <span><kbd>Esc</kbd> Close</span>
+      </div>
+      <span class="brand">Act Command Palette</span>
+    </div>
+  </div>
+</body>
+</html>

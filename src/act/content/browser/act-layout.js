@@ -22,6 +22,11 @@ var ActLayout = {
     this._buildHeader();
     this._buildFooter();
     this._hideSidebarTools();
+    try {
+      this._buildTabFilter();
+    } catch (e) {
+      console.error(e);
+    }
 
     this.hotzone = document.createXULElement("box");
     this.hotzone.id = "act-hotzone";
@@ -180,3 +185,84 @@ var ActLayout = {
     root.style.setProperty("--act-toolbox-height", `${height}px`);
   },
 };
+
+ActLayout._buildTabFilter = function () {
+    if (document.getElementById("act-tab-filter")) {
+      return;
+    }
+    let sidebar = document.getElementById("sidebar-main") || document.querySelector("sidebar-main");
+    if (!sidebar) {
+      return;
+    }
+    let box = document.createElementNS("http://www.w3.org/1999/xhtml", "div");
+    box.id = "act-tab-filter";
+    box.className = "hidden";
+    let icon = document.createElementNS("http://www.w3.org/1999/xhtml", "svg");
+    icon.id = "act-tab-filter-icon";
+    icon.setAttribute("viewBox", "0 0 16 16");
+    let path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    path.setAttribute("d", "M7 1.75a5.25 5.25 0 0 1 4.16 8.46l3.07 3.07a.75.75 0 1 1-1.06 1.06l-3.07-3.07A5.25 5.25 0 1 1 7 1.75zm0 1.5a3.75 3.75 0 1 0 0 7.5 3.75 3.75 0 0 0 0-7.5z");
+    icon.append(path);
+    let input = document.createElementNS("http://www.w3.org/1999/xhtml", "input");
+    input.id = "act-tab-filter-input";
+    input.type = "search";
+    input.placeholder = "Filter tabs...";
+    input.autocomplete = "off";
+    box.append(icon, input);
+    let tabs = document.getElementById("vertical-tabs") || document.querySelector("#tabbrowser-tabs[orient='vertical']");
+    if (tabs && tabs.parentNode) {
+      tabs.parentNode.insertBefore(box, tabs);
+    } else {
+      sidebar.prepend(box);
+    }
+    input.addEventListener("input", () => this._applyTabFilter(input.value));
+    input.addEventListener("keydown", e => {
+      if (e.key == "Escape") {
+        input.value = "";
+        this._applyTabFilter("");
+        box.classList.add("hidden");
+        input.blur();
+      }
+    });
+    document.addEventListener("keydown", e => {
+      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key.toLowerCase() == "f") {
+        // only if sidebar/tabs focused area? just toggle
+        e.preventDefault();
+        box.classList.remove("hidden");
+        input.focus();
+        input.select();
+      }
+    }, true);
+  },
+
+ActLayout._applyTabFilter = function (q) {
+    q = q.trim().toLowerCase();
+    let tabs = document.getElementById("vertical-tabs");
+    if (!tabs) return;
+    if (!q) {
+      tabs.classList.remove("act-filtering");
+      for (let tab of tabs.querySelectorAll(".tabbrowser-tab")) {
+        tab.classList.remove("act-filter-match");
+      }
+      for (let group of tabs.querySelectorAll("tab-group")) {
+        group.classList.remove("act-filter-match");
+      }
+      return;
+    }
+    tabs.classList.add("act-filtering");
+    for (let tab of tabs.querySelectorAll(".tabbrowser-tab")) {
+      let label = (tab.label || tab.textLabel || "").toLowerCase();
+      if (label.includes(q)) {
+        tab.classList.add("act-filter-match");
+      } else {
+        tab.classList.remove("act-filter-match");
+      }
+    }
+    for (let group of tabs.querySelectorAll("tab-group")) {
+      if (group.querySelector(".tabbrowser-tab.act-filter-match")) {
+        group.classList.add("act-filter-match");
+      } else {
+        group.classList.remove("act-filter-match");
+      }
+    }
+  };

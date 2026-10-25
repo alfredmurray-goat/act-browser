@@ -1078,3 +1078,94 @@
   -moz-context-properties: fill;
   fill: currentColor;
 }
+
+
+/* --- Command Palette -------------------------------------------------------- */
+
+#act-command-palette {
+  background: transparent;
+  border: none;
+}
+
+#act-command-palette-frame {
+  width: 640px;
+  height: 420px;
+  border: none;
+  background: transparent;
+}
+
+
+/* --- Tab Search/Filter ----------------------------------------------------- */
+
+#act-tab-filter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 4px 10px 6px;
+  padding: 6px 10px;
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+  background: color-mix(in srgb, var(--bg-2) 70%, transparent);
+}
+
+#act-tab-filter.hidden {
+  display: none;
+}
+
+#act-tab-filter-icon {
+  width: 14px;
+  height: 14px;
+  fill: var(--muted);
+  flex: none;
+}
+
+#act-tab-filter-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  box-shadow: none !important;
+  font-size: 0.9em;
+}
+
+#vertical-tabs.act-filtering .tabbrowser-tab:not(.act-filter-match) {
+  display: none !important;
+}
+
+#vertical-tabs.act-filtering tab-group:not(:has(.tabbrowser-tab.act-filter-match)) {
+  display: none !important;
+}
+
+
+/* --- Tab Hibernation/Unloading -------------------------------------------- */
+
+.tabbrowser-tab[act-unloaded] {
+  opacity: 0.5;
+}
+
+.tabbrowser-tab[act-unloaded] .tab-icon-image {
+  filter: grayscale(1);
+}
+
+
+/* --- Split View / Tab Tiling ---------------------------------------------- */
+
+#tabbrowser-tabpanels.split-view {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+}
+
+#tabbrowser-tabpanels.split-view .browserSidebarContainer,
+#tabbrowser-tabpanels.split-view .browserContainer {
+  display: flex !important;
+}
+
+#tabbrowser-tabpanels.split-view > .split-view-panel {
+  grid-column: auto !important;
+  position: relative !important;
+  inset: auto !important;
+  width: 100% !important;
+  height: 100% !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}

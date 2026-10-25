@@ -13,6 +13,7 @@ ChromeUtils.defineESModuleGetters(lazy, {
   ActTabSync: "resource://act/ActTabSync.sys.mjs",
   ActFraming: "resource://act/ActFraming.sys.mjs",
   ActSearch: "resource://act/ActSearch.sys.mjs",
+  ActCollections: "resource://act/ActCollections.sys.mjs",
   ActUpdater: "resource://act/ActUpdater.sys.mjs",
   ActUrlbar: "resource://act/ActUrlbar.sys.mjs",
   CustomizableUI:
@@ -41,6 +42,7 @@ const WINDOW_SCRIPTS = [
   "chrome://act/content/browser/act-context-menu.js",
   "chrome://act/content/browser/act-upload.js",
   "chrome://act/content/browser/act-updates.js",
+  "chrome://act/content/browser/act-command-palette.js",
 ];
 
 const WINDOW_STYLES = ["chrome://act/content/browser/act-browser.css"];
@@ -226,6 +228,12 @@ export const ActStartup = {
       lazy.ActAgents.init();
     } catch (e) {
       console.error("Act: agent control", e);
+    }
+
+    try {
+      lazy.ActCollections.init?.();
+    } catch (e) {
+      console.error("Act: collections", e);
     }
 
     try {

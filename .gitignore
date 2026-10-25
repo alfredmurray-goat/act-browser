@@ -5,3 +5,4 @@ node_modules/
 *.dmg
 *.tar.xz
 .claude/
+Act Browser/

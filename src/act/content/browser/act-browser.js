@@ -69,6 +69,9 @@ var ActBrowser = {
       ActContextMenu,
       ActUploadMenu,
       ActUpdateBar,
+      ActCommandPalette,
+      ActTabHibernation,
+      ActSplitView,
     ]) {
       try {
         part.init();
@@ -131,6 +134,29 @@ var ActBrowser = {
   },
 
   _onKeyDown(event) {
+    // Command Palette: Cmd+K on mac, Ctrl+K elsewhere
+    if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() == "k") {
+      event.preventDefault();
+      event.stopPropagation();
+      try {
+        ActCommandPalette?.toggle();
+      } catch (e) {
+        console.error(e);
+      }
+      return;
+    }
+    // Split view toggle: Ctrl+Alt+S
+    if (event.ctrlKey && event.altKey && !event.metaKey && !event.shiftKey && event.code == "KeyS") {
+      event.preventDefault();
+      event.stopPropagation();
+      try {
+        ActSplitView?.toggle();
+      } catch (e) {
+        console.error(e);
+      }
+      return;
+    }
+
     // Ctrl+Alt on every platform, like Zen. Using event.code so it works
     // with Option on macOS, which changes event.key.
     if (!event.ctrlKey || !event.altKey || event.metaKey || event.shiftKey) {
@@ -181,5 +207,76 @@ var ActBrowser = {
       return;
     }
     openWebLinkIn(uri.href, "tab", { inBackground: background });
+  },
+};
+
+
+var ActTabHibernation = {
+  init() {
+    setInterval(() => this._check(), 120000);
+  },
+  _check() {
+    try {
+      let tabs = gBrowser?.tabs || [];
+      let now = Date.now();
+      for (let tab of tabs) {
+        if (tab.selected || tab.pinned || tab.closing) continue;
+        if (tab.getAttribute("pending") == "true") continue;
+        // Heuristic: if not active and browser not loaded? Firefox may have
+        // tab.unload() in some builds; otherwise just mark visual state
+        if (!tab.hasAttribute("act-unloaded")) {
+          try {
+            // Try to unload if available
+            if (typeof tab.linkedBrowser?.unload == "function") {
+              tab.linkedBrowser.unload();
+            } else if (gBrowser.discardBrowser) {
+              gBrowser.discardBrowser(tab.linkedBrowser);
+            }
+          } catch {}
+          try {
+            tab.setAttribute("act-unloaded", "true");
+          } catch {}
+        }
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  },
+};
+
+
+var ActSplitView = {
+  panels: [],
+  active: false,
+
+  init() {
+    // add shortcut
+  },
+
+  enable() {
+    try {
+      let panels = document.getElementById("tabbrowser-tabpanels");
+      if (!panels || this.active) return;
+      panels.classList.add("split-view");
+      this.active = true;
+    } catch (e) {
+      console.error(e);
+    }
+  },
+
+  disable() {
+    try {
+      let panels = document.getElementById("tabbrowser-tabpanels");
+      if (!panels) return;
+      panels.classList.remove("split-view");
+      this.active = false;
+    } catch (e) {
+      console.error(e);
+    }
+  },
+
+  toggle() {
+    if (this.active) this.disable();
+    else this.enable();
   },
 };
