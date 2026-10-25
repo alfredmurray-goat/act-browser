@@ -14,22 +14,34 @@
 </head>
 <body>
   <header id="topbar">
-    <img class="logo" src="chrome://act/content/icons/logo-64.png" alt="">
-    <span id="heading">Explore</span>
+    <div class="brand">
+      <img class="logo" src="chrome://act/content/icons/logo-64.png" alt="">
+      <span id="heading">Explore</span>
+    </div>
     <button class="icon-button" id="toggle-settings" title="Settings">
       <img src="chrome://act/content/icons/settings.svg" alt="">
     </button>
   </header>
 
   <section id="view-explore" class="view">
+    <div class="explore-hero">
+      <h1 class="hero-title">Discover the live web</h1>
+      <p class="hero-subtitle">Ask for places, products, events and more</p>
+    </div>
     <form id="explore-form">
       <div id="querybox">
         <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M7 1.75a5.25 5.25 0 0 1 4.16 8.46l3.07 3.07a.75.75 0 1 1-1.06 1.06l-3.07-3.07A5.25 5.25 0 1 1 7 1.75zm0 1.5a3.75 3.75 0 1 0 0 7.5 3.75 3.75 0 0 0 0-7.5z"/></svg>
-        <input id="query" type="search" placeholder="Places, products, events, sites…" autocomplete="off">
+        <input id="query" type="search" placeholder="Search the live web…" autocomplete="off">
       </div>
       <div class="filters">
-        <button type="button" class="pill" id="open-now" aria-pressed="false">Open now</button>
-        <button type="button" class="pill" id="news" aria-pressed="false">News</button>
+        <button type="button" class="pill" id="open-now" aria-pressed="false">
+          <svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.25"/><circle cx="8" cy="8" r="2.5" fill="currentColor" opacity="0.5"/></svg>
+          Open now
+        </button>
+        <button type="button" class="pill" id="news" aria-pressed="false">
+          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.25 3.5A1.75 1.75 0 0 1 5 1.75h7.25a.75.75 0 0 1 .75.75v11a1.75 1.75 0 0 0-1.75-1.75H4.5c-.69 0-1.25.56-1.25 1.25v-9.5zm1.5 0v9.5c0-.138.112-.25.25-.25h6.5a.25.25 0 0 1 .25.25V3.5a.25.25 0 0 0-.25-.25H5a.25.25 0 0 0-.25.25z"/></svg>
+          News
+        </button>
         <label class="pill city">
           <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.5a4.75 4.75 0 0 1 4.75 4.75c0 3.2-3.6 7.2-4.2 7.85a.75.75 0 0 1-1.1 0C6.85 13.45 3.25 9.45 3.25 6.25A4.75 4.75 0 0 1 8 1.5zm0 3a1.75 1.75 0 1 0 0 3.5 1.75 1.75 0 0 0 0-3.5z"/></svg>
           <input id="city" type="text" placeholder="Anywhere" autocomplete="off" aria-label="City">
@@ -39,18 +51,20 @@
     <div id="status" class="status"></div>
     <div id="results">
       <div id="ideas">
-        <p>Live from the web, ask for something current:</p>
+        <p class="ideas-label">Try searching for</p>
         <div class="chips">
           <button type="button" class="chip">What's open near me right now</button>
           <button type="button" class="chip">Concerts this weekend</button>
           <button type="button" class="chip">Cheapest Nike Pegasus</button>
           <button type="button" class="chip">Notion pricing</button>
+          <button type="button" class="chip">Best brunch spots nearby</button>
+          <button type="button" class="chip">Movie times tonight</button>
         </div>
       </div>
     </div>
     <footer class="attribution">
-      <span>Live results from <a href="https://actuent.ai">Actuent</a></span>
-      <button type="button" id="see-all" class="link" hidden>See all results</button>
+      <span>Powered by <a href="https://actuent.ai">Actuent</a></span>
+      <button type="button" id="see-all" class="link" hidden>See all results →</button>
     </footer>
   </section>
 

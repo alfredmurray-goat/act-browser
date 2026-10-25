@@ -3,6 +3,10 @@
 What's new in each version of Act Browser. The browser shows this after it
 updates (turn that off with `act.changelog.enabled` in about:config).
 
+## 0.7.2
+
+- Explore looks sharper: a cleaner header, bolder search box, friendlier filters and chips, and a nicer empty state.
+
 ## 0.7.1
 
 - Private windows look different: a deep purple frame and a Private badge at the top of the sidebar, so you can't mistake one for a normal window. Open one from the new button at the bottom of the sidebar (or ⇧⌘P / Ctrl+Shift+P).
