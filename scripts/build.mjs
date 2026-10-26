@@ -76,10 +76,14 @@ async function bundleExtensions(resources) {
       let url = `https://addons.mozilla.org/firefox/downloads/latest/${ext.amo}/latest.xpi`;
       let response = await fetch(url);
       if (!response.ok) {
-        throw new Error(`Couldn't download ${ext.name}: ${response.status}`);
+        log(`Couldn't download ${ext.name}: ${response.status} (skipping)`);
+        return;
       }
       fs.mkdirSync(path.dirname(cached), { recursive: true });
       fs.writeFileSync(cached, Buffer.from(await response.arrayBuffer()));
+    }
+    if (!fs.existsSync(cached)) {
+      return;
     }
     fs.copyFileSync(cached, path.join(dir, `${ext.id}.xpi`));
   }

@@ -124,3 +124,7 @@ pref("browser.startup.page", 3);
 // Workspaces (their names and icons) sync along with other settings.
 pref("services.sync.prefs.sync.act.workspaces.list", true);
 pref("act.collections.list", "[]");
+
+// Force dark mode only.
+pref("ui.systemUsesDarkTheme", 1);
+pref("layout.css.prefers-color-scheme.content-override", 0);

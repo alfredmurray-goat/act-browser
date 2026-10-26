@@ -4,33 +4,22 @@
 
 /* Shared look for Act pages: the toolbar popup and the new tab page. */
 
-:root {
-  --accent: #6d5dfc;
+ :root {
+  --accent: #9d91ff;
   --accent-soft: color-mix(in srgb, var(--accent) 12%, transparent);
-  --bg: #ffffff;
-  --bg-2: #f4f4f6;
-  --text: #1c1b22;
-  --muted: #6b6a73;
-  --border: #e3e2e8;
-  --good: #1a7f37;
-  --bad: #c62828;
+  --bg: #1f1e25;
+  --bg-2: #2a2931;
+  --text: #ececf1;
+  --muted: #a3a2ad;
+  --border: #393842;
+  --good: #57c46b;
+  --bad: #ff7a7a;
   --radius: 10px;
 
-  color-scheme: light dark;
+  color-scheme: dark;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --accent: #9d91ff;
-    --bg: #1f1e25;
-    --bg-2: #2a2931;
-    --text: #ececf1;
-    --muted: #a3a2ad;
-    --border: #393842;
-    --good: #57c46b;
-    --bad: #ff7a7a;
-  }
-}
+
 
 * {
   box-sizing: border-box;
@@ -163,15 +152,11 @@ input[type="url"] {
   &.lettered {
     border-color: hsl(var(--hue) 55% 55% / 0.3);
     background: hsl(var(--hue) 55% 50% / 0.18);
-    color: hsl(var(--hue) 55% 40%);
-  }
-}
-
-@media (prefers-color-scheme: dark) {
-  .site-icon.lettered {
     color: hsl(var(--hue) 70% 76%);
   }
 }
+
+
 
 .result-body {
   flex: 1;

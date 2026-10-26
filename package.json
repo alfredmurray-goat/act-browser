@@ -1,6 +1,6 @@
 {
   "name": "act-browser",
-  "version": "0.7.4",
+  "version": "0.7.5",
   "private": true,
   "description": "A Firefox based browser with everything in the sidebar, workspaces, and the live web built in through Actuent.",
   "license": "MPL-2.0",

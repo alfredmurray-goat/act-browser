@@ -15,6 +15,11 @@
       "id": "{446900e4-71c2-419f-a6a7-df9c091e268b}",
       "amo": "bitwarden-password-manager",
       "name": "Bitwarden"
+    },
+    {
+      "id": "@windscribeff",
+      "amo": "windscribe",
+      "name": "Windscribe VPN"
     }
   ],
   "updates": {

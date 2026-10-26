@@ -3,7 +3,14 @@
 What's new in each version of Act Browser. The browser shows this after it
 updates (turn that off with `act.changelog.enabled` in about:config).
 
+## 0.7.5
+
+- Dark mode only: light mode removed, the whole browser is dark.
+- Ad blocking fixed: uBlock Origin is now ensured installed in existing profiles.
+- Free VPN added: Windscribe bundled for one-click VPN and extra ad blocking.
+
 ## 0.7.4
+
 
 - Command Palette (Cmd+K/Ctrl+K) unifies search across tabs, history, bookmarks, workspaces, settings, and actions.
 - Tab search/filter in the sidebar (Ctrl+Shift+F).

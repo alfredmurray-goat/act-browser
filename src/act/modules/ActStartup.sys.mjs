@@ -8,6 +8,7 @@ const lazy = {};
 ChromeUtils.defineESModuleGetters(lazy, {
   AboutNewTab: "resource:///modules/AboutNewTab.sys.mjs",
   ActAgents: "resource://act/ActAgents.sys.mjs",
+  ActExtensionInstaller: "resource://act/ActExtensionInstaller.sys.mjs",
   ActExtensions: "resource://act/ActExtensions.sys.mjs",
   ActPasskeys: "resource://act/ActPasskeys.sys.mjs",
   ActTabSync: "resource://act/ActTabSync.sys.mjs",
@@ -228,6 +229,12 @@ export const ActStartup = {
       lazy.ActAgents.init();
     } catch (e) {
       console.error("Act: agent control", e);
+    }
+
+    try {
+      lazy.ActExtensionInstaller?.init?.();
+    } catch (e) {
+      console.error("Act: extension installer", e);
     }
 
     try {

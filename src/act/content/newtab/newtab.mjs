@@ -443,7 +443,7 @@ async function addSite(e) {
 // --- Weather (Rejn) -----------------------------------------------------------------
 
 function weatherTheme() {
-  return matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  return "dark";
 }
 
 function pageLocale() {
