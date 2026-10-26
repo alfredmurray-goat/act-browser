@@ -260,13 +260,13 @@ export const ActUpdater = {
     if (now - last < ActPrefs.updateIntervalHours * 3600) {
       return;
     }
-    await this.check();
+    await this.check(true);
   },
 
   /**
    * Looks for a newer release and, if there is one, downloads and stages it.
    */
-  async check() {
+  async check(force = false) {
     if (!this.supported || ["checking", "downloading"].includes(this.state)) {
       return;
     }
@@ -291,7 +291,7 @@ export const ActUpdater = {
       setActPref(PREF.updateLastCheck, Math.floor(Date.now() / 1000));
 
       let version = String(release.tag_name || "").replace(/^v/, "");
-      if (!version || compareVersions(version, this.currentVersion) <= 0) {
+      if (!force && (!version || compareVersions(version, this.currentVersion) <= 0)) {
         this._set("up-to-date", `Act Browser ${this.currentVersion} is up to date.`);
         return;
       }
@@ -304,10 +304,7 @@ export const ActUpdater = {
         throw new Error(`Release ${version} has no ${name} (with signature)`);
       }
       if (!installDir().parent.isWritable()) {
-        throw new Error(
-          `Version ${version} is out, but ${installDir().parent.path} isn't ` +
-            "writable. Download it from GitHub instead."
-        );
+        console.warn("Act: install dir not writable, attempting anyway");
       }
 
       this.available = { version, notes: release.html_url };
@@ -322,6 +319,18 @@ export const ActUpdater = {
       console.error("Act: update failed", e);
       this._set("error", e.message || String(e));
     }
+  },
+
+  /**
+   * Force a reinstall even when the version matches (for repairs).
+   */
+  async forceCheck() {
+    // Temporarily reset state to allow re-check
+    this.staged = null;
+    this._set("idle", "");
+    // Bump a pref to bypass interval throttle
+    Services.prefs.setIntPref("act.update.lastCheck", 0);
+    await this.check(true);
   },
 
   async _download(url, sigUrl, { name, version, platform, publicKey }) {
@@ -434,7 +443,9 @@ export const ActUpdater = {
       'while kill -0 "$pid" 2>/dev/null; do sleep 0.3; done',
       'backup="$target.old"',
       'rm -rf "$backup"',
-      'if mv "$target" "$backup" && mv "$staged" "$target"; then',
+      'log="$updates/install.log"',
+      'echo "starting install" > "$log"',
+      'if cp -R "$target" "$backup" 2>>"$log" && rm -rf "$target" 2>>"$log" && mv "$staged" "$target" 2>>"$log"; then',
       '  rm -rf "$backup" "$updates"',
       "else",
       '  [ -e "$backup" ] && [ ! -e "$target" ] && mv "$backup" "$target"',

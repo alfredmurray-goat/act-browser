@@ -274,6 +274,7 @@ $("sync-account").addEventListener("click", () => {
   win.ActPopup.close();
 });
 $("check-updates").addEventListener("click", () => ActUpdater.check());
+$("force-update").addEventListener("click", () => ActUpdater.forceCheck());
 $("restart-update").addEventListener("click", () => ActUpdater.restartToUpdate());
 let updateObserver = () => showUpdateState();
 Services.obs.addObserver(updateObserver, ActUpdater.STATE_TOPIC);
