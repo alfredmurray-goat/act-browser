@@ -9,6 +9,7 @@ export const PREF = {
   actuentUrlbarMax: "act.actuent.urlbar.maxResults",
   actuentSiteActions: "act.actuent.siteActions",
   compactMode: "act.compactMode",
+  accentColor: "act.accentColor",
   sidebarToolbar: "act.layout.sidebarToolbar",
   extensionsInSidebar: "act.extensions.inSidebar",
   newtabEnabled: "act.newtab.enabled",
@@ -20,6 +21,7 @@ export const PREF = {
   updateIntervalHours: "act.update.intervalHours",
   workspacesEnabled: "act.workspaces.enabled",
   workspacesList: "act.workspaces.list",
+  shortcuts: "act.shortcuts",
 };
 
 // Live views of our prefs. Read them as ActPrefs.actuentEnabled etc.
@@ -35,6 +37,7 @@ const defs = [
   ["actuentUrlbarMax", 3],
   ["actuentSiteActions", true],
   ["compactMode", false],
+  ["accentColor", "#6d5dfc"],
   ["sidebarToolbar", false],
   ["extensionsInSidebar", true],
   ["newtabEnabled", true],
@@ -46,6 +49,7 @@ const defs = [
   ["updateIntervalHours", 6],
   ["workspacesEnabled", true],
   ["workspacesList", "[]"],
+  ["shortcuts", "{}"],
 ];
 
 for (let [key, fallback] of defs) {

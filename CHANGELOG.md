@@ -3,7 +3,16 @@
 What's new in each version of Act Browser. The browser shows this after it
 updates (turn that off with `act.changelog.enabled` in about:config).
 
+## 0.7.7
+
+- Accent color picker in Settings (personalize the browser's accent).
+- Focus Mode (Ctrl+Alt+F): hides sidebar and toolbar for distraction-free browsing.
+- Custom keyboard shortcuts: remap Act shortcuts in Settings.
+- Command Palette now searches page content of open tabs.
+- Download manager sidebar panel with progress, history, and quick actions.
+
 ## 0.7.6
+
 
 - Force update: new button in Settings to reinstall even when on the latest version.
 - Updater is more robust: no longer blocked by writable checks, macOS install uses copy+move with logging.

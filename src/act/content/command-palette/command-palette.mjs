@@ -45,10 +45,18 @@ async function gather() {
   if (gBrowser?.tabs) {
     for (let tab of gBrowser.tabs) {
       if (tab.closing) continue;
+      let contentText = "";
+      try {
+        let browser = tab.linkedBrowser;
+        if (browser?.contentDocument?.body) {
+          contentText = (browser.contentDocument.body.innerText || "").slice(0, 500);
+        }
+      } catch {}
       items.push({
         type: "tab",
         title: tab.label || tab.textLabel || "",
         subtitle: tab.linkedBrowser?.currentURI?.spec || "",
+        content: contentText,
         icon: "tab",
         tab,
         score: 0,
@@ -85,7 +93,7 @@ async function gather() {
 
 function scoreItem(item, q) {
   if (!q) return 1;
-  let t = (item.title + " " + item.subtitle).toLowerCase();
+  let t = (item.title + " " + item.subtitle + " " + (item.content || "")).toLowerCase();
   if (t.includes(q)) return 2;
   // simple fuzzy
   let i = 0;

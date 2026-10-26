@@ -1169,3 +1169,48 @@
   visibility: visible !important;
   opacity: 1 !important;
 }
+
+
+/* --- Focus Mode (Zen Mode) ------------------------------------------------- */
+
+:root[act-focus] #sidebar-container,
+:root[act-focus] #navigator-toolbox {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 200ms ease;
+}
+
+:root[act-focus] #sidebar-container:hover,
+:root[act-focus] #navigator-toolbox:hover {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+:root[act-focus] #act-focus-exit {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  z-index: 9999;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--act-accent);
+  background: color-mix(in srgb, var(--act-accent) 20%, transparent);
+  color: var(--act-accent);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+
+/* --- Downloads Panel -------------------------------------------------------- */
+
+#act-downloads-panel {
+  background: transparent;
+  border: none;
+}
+
+#act-downloads-frame {
+  width: 360px;
+  height: 420px;
+  border: none;
+  background: transparent;
+}

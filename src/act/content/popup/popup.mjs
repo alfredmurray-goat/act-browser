@@ -152,6 +152,8 @@ function loadSettings() {
     input.checked = Services.prefs.getBoolPref(input.dataset.pref, false);
   }
   $("compact-toggle").checked = ActPrefs.compactMode;
+  let ac = $("accent-color");
+  if (ac) ac.value = Services.prefs.getStringPref("act.accentColor", "#6d5dfc");
   $("version").textContent = `built on Firefox ${Services.appinfo.version}`;
 
   showUpdateState();
@@ -267,6 +269,12 @@ $("explore-form").addEventListener("submit", e => {
 for (let input of document.querySelectorAll("[data-pref]")) {
   input.addEventListener("change", () => {
     Services.prefs.setBoolPref(input.dataset.pref, input.checked);
+  });
+}
+let accentInput = $("accent-color");
+if (accentInput) {
+  accentInput.addEventListener("change", () => {
+    Services.prefs.setStringPref("act.accentColor", accentInput.value);
   });
 }
 $("sync-account").addEventListener("click", () => {

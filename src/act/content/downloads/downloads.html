@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src chrome:; img-src chrome: https: data:; style-src chrome: 'unsafe-inline';">
+  <link rel="stylesheet" href="chrome://act/content/shared/act.css">
+  <link rel="stylesheet" href="downloads.css">
+  <script type="module" src="downloads.mjs"></script>
+</head>
+<body>
+  <header class="dl-header">
+    <h1>Downloads</h1>
+    <button id="dl-clear" class="link">Clear history</button>
+  </header>
+  <div id="dl-list" class="dl-list"></div>
+  <div id="dl-empty" class="dl-empty" hidden>No downloads yet.</div>
+</body>
+</html>

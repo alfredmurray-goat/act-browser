@@ -43,6 +43,7 @@ const WINDOW_SCRIPTS = [
   "chrome://act/content/browser/act-context-menu.js",
   "chrome://act/content/browser/act-upload.js",
   "chrome://act/content/browser/act-updates.js",
+  "chrome://act/content/browser/act-downloads.js",
   "chrome://act/content/browser/act-command-palette.js",
 ];
 

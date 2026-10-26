@@ -43,6 +43,7 @@ var ActBrowser = {
         PREF.actuentEnabled,
         PREF.actuentSiteActions,
         PREF.compactMode,
+        PREF.accentColor,
         PREF.sidebarToolbar,
         PREF.extensionsInSidebar,
         PREF.workspacesEnabled,
@@ -55,6 +56,14 @@ var ActBrowser = {
     this._onKeyDown = this._onKeyDown.bind(this);
     window.addEventListener("keydown", this._onKeyDown, true);
     window.addEventListener("unload", () => this.uninit(), { once: true });
+    // Route the downloads button to our panel instead of Firefox's default.
+    document.addEventListener("command", e => {
+      if (e.target?.id == "downloads-button") {
+        e.stopPropagation();
+        e.preventDefault();
+        ActDownloads.toggle();
+      }
+    }, true);
 
     // Order matters a little: the extensions bar goes above the workspace
     // switcher, so workspaces come first.
@@ -94,6 +103,9 @@ var ActBrowser = {
     let root = document.documentElement;
     let vertical = Services.prefs.getBoolPref("sidebar.verticalTabs", false);
     root.toggleAttribute("act-compact", this.prefs.compactMode);
+    let accent = this.prefs.accentColor || "#6d5dfc";
+    root.style.setProperty("--act-accent", accent);
+    root.style.setProperty("--act-accent-soft", `color-mix(in srgb, ${accent} 14%, transparent)`);
     root.toggleAttribute("act-actuent", this.prefs.actuentEnabled);
     root.toggleAttribute("act-vertical", vertical);
     root.toggleAttribute(
@@ -133,6 +145,29 @@ var ActBrowser = {
     this.setCompactMode(!this.prefs.compactMode);
   },
 
+  setFocusMode(on) {
+    document.documentElement.toggleAttribute("act-focus", on);
+    this._ensureFocusExit(on);
+  },
+
+  toggleFocusMode() {
+    let on = !document.documentElement.hasAttribute("act-focus");
+    this.setFocusMode(on);
+  },
+
+  _ensureFocusExit(on) {
+    let existing = document.getElementById("act-focus-exit");
+    if (on && !existing) {
+      let btn = document.createElement("button");
+      btn.id = "act-focus-exit";
+      btn.textContent = "Exit focus mode (Ctrl+Alt+F)";
+      btn.addEventListener("click", () => this.setFocusMode(false));
+      document.body.append(btn);
+    } else if (!on && existing) {
+      existing.remove();
+    }
+  },
+
   _onKeyDown(event) {
     // Command Palette: Cmd+K on mac, Ctrl+K elsewhere
     if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() == "k") {
@@ -163,28 +198,56 @@ var ActBrowser = {
       return;
     }
     let handled = true;
-    switch (event.code) {
-      case "KeyE":
+    // Custom shortcuts override defaults
+    let custom = {};
+    try { custom = JSON.parse(this.prefs.shortcuts || "{}"); } catch {}
+    let action = null;
+    // Find which action this key maps to
+    for (let [act, code] of Object.entries(custom)) {
+      if (code == event.code) { action = act; break; }
+    }
+    if (!action) {
+      // defaults
+      const defaults = {
+        "explore": "KeyE",
+        "compact": "KeyC",
+        "focus": "KeyF",
+        "tabgroup": "KeyG",
+        "workspaceNext": "ArrowRight",
+        "workspacePrev": "ArrowLeft",
+      };
+      for (let [act, code] of Object.entries(defaults)) {
+        if (code == event.code) { action = act; break; }
+      }
+      // digits
+      if (!action && /^Digit[1-9]$/.test(event.code)) {
+        action = "workspaceJump";
+      }
+    }
+    switch (action) {
+      case "explore":
         ActPopup.toggle();
         break;
-      case "KeyC":
+      case "compact":
         this.toggleCompactMode();
         break;
-      case "KeyG":
+      case "focus":
+        this.toggleFocusMode();
+        break;
+      case "tabgroup":
         ActTabGroups.create();
         break;
-      case "ArrowRight":
+      case "workspaceNext":
         ActWorkspaces.cycle(1);
         break;
-      case "ArrowLeft":
+      case "workspacePrev":
         ActWorkspaces.cycle(-1);
         break;
+      case "workspaceJump":
+        ActWorkspaces.switchToIndex(parseInt(event.code.slice(5)) - 1);
+        break;
       default:
-        if (/^Digit[1-9]$/.test(event.code)) {
-          ActWorkspaces.switchToIndex(parseInt(event.code.slice(5)) - 1);
-        } else {
-          handled = false;
-        }
+        handled = false;
     }
     if (handled) {
       event.preventDefault();
