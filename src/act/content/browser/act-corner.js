@@ -244,7 +244,7 @@ var ActCorner = {
     this.corner.append(glance);
     this.glance = glance;
     this._timerEl = timer;
-    this._timerInterval = null;
+    try { this._timerInterval = null; } catch (e) {}
     this._timerRemaining = 0;
     this._timerRunning = false;
     this._timerDisplay = timerDisplay;

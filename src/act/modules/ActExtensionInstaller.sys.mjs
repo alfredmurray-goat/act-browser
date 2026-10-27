@@ -26,7 +26,7 @@ export const ActExtensionInstaller = {
     }
     try {
       let am = lazy.AddonManager;
-      await am.startup();
+      try { await am.startup(); } catch (e) { /* already started */ }
       let dir = Services.dirsvc.get("GreD", Ci.nsIFile);
       dir.append("distribution");
       dir.append("extensions");
@@ -48,6 +48,6 @@ export const ActExtensionInstaller = {
     } catch (e) {
       console.error("Act: extension installer", e);
     }
-    Services.prefs.setBoolPref(PREF_DONE, true);
+    try { Services.prefs.setBoolPref(PREF_DONE, true); } catch (e) {}
   },
 };

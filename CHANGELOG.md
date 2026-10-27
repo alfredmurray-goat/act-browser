@@ -3,7 +3,13 @@
 What's new in each version of Act Browser. The browser shows this after it
 updates (turn that off with `act.changelog.enabled` in about:config).
 
+## 0.7.9
+
+- Fix: Windows smoke test (increased extension install wait, more defensive init).
+- ActExtensionInstaller: more robust on Windows.
+
 ## 0.7.8
+
 
 - Reading List: sidebar panel with save-for-later, read/unread, tags, sync.
 - Session snapshots: save/restore named sets of tabs and workspaces.

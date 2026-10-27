@@ -673,7 +673,7 @@ if (api) {
   buildWallpaperPicker();
   loadWallpaper();
   loadState();
-  renderWidgets();
+  try { renderWidgets(); } catch (e) { console.error('widgets', e); }
   renderSites();
   // No autofocus here: a new tab focuses the address bar, and grabbing focus
   // back mid-typing is what made keystrokes jump between the two boxes.

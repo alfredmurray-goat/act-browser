@@ -120,7 +120,7 @@ try {
     for (let i = 0; i < 60 && typeof ActBrowser == "undefined"; i++) {
       await new Promise(r => setTimeout(r, 500));
     }
-    await new Promise(r => setTimeout(r, 3000));
+    await new Promise(r => setTimeout(r, 8000));
     let { ActUpdater } = ChromeUtils.importESModule("resource://act/ActUpdater.sys.mjs");
     let { AddonManager } = ChromeUtils.importESModule("resource://gre/modules/AddonManager.sys.mjs");
     let addons = (await AddonManager.getAddonsByTypes(["extension"]))
