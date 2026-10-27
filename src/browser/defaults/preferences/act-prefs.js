@@ -19,6 +19,7 @@ pref("act.actuent.siteActions", true);
 
 pref("act.compactMode", false);
 pref("act.accentColor", "#6d5dfc");
+pref("act.theme", "dark");
 // By default the toolbar sits above the page and the sidebar runs to the top
 // of the window. True puts the address bar inside the sidebar instead.
 pref("act.layout.sidebarToolbar", false);
@@ -74,6 +75,9 @@ pref("act.update.intervalHours", 6);
 pref("act.workspaces.enabled", true);
 pref("act.workspaces.list", "[{\"id\":\"home\",\"name\":\"Home\",\"icon\":\"🏠\"}]");
 pref("act.shortcuts", "{}");
+pref("act.readingList", "[]");
+pref("act.sessions.list", "[]");
+pref("act.clips.list", "[]");
 
 // --- Firefox defaults we change ----------------------------------------------
 

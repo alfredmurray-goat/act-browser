@@ -16,6 +16,9 @@ const { Actuent } = ChromeUtils.importESModule(
 const { ActPrefs, watchPrefs } = ChromeUtils.importESModule(
   "resource://act/ActPrefs.sys.mjs"
 );
+const { ActSessions } = ChromeUtils.importESModule(
+  "resource://act/ActSessions.sys.mjs"
+);
 const { ActAgents } = ChromeUtils.importESModule(
   "resource://act/ActAgents.sys.mjs"
 );
@@ -70,6 +73,7 @@ function focus() {
 
 // --- Explore -------------------------------------------------------------------
 
+try { document.documentElement.setAttribute("act-theme", Services.prefs.getStringPref("act.theme", "dark")); } catch {}
 const ideas = $("ideas");
 
 function pressed(id) {
@@ -154,9 +158,12 @@ function loadSettings() {
   $("compact-toggle").checked = ActPrefs.compactMode;
   let ac = $("accent-color");
   if (ac) ac.value = Services.prefs.getStringPref("act.accentColor", "#6d5dfc");
+  let ts = $("theme-select");
+  if (ts) ts.value = Services.prefs.getStringPref("act.theme", "dark");
   $("version").textContent = `built on Firefox ${Services.appinfo.version}`;
 
   showUpdateState();
+  renderSessions();
   showSyncState().catch(e => console.error("Act: sync settings", e));
 
   let agents = ActPrefs.agentsEnabled;
@@ -190,6 +197,35 @@ async function showSyncState() {
     rows.push(row);
   }
   $("sync-devices").replaceChildren(...rows);
+}
+
+function renderSessions() {
+  let container = $("session-list");
+  if (!container) return;
+  container.replaceChildren();
+  let sessions = ActSessions.list();
+  for (let sess of sessions) {
+    let row = document.createElement("div");
+    row.className = "sync-device";
+    let span = document.createElement("span");
+    span.textContent = `${sess.name} (${sess.tabs.length} tabs)`;
+    row.append(span);
+    let restore = document.createElement("button");
+    restore.textContent = "Restore";
+    restore.addEventListener("click", () => {
+      let win = (window.browsingContext?.top?.window) || window.opener || window;
+      ActSessions.restore(sess.id);
+    });
+    row.append(restore);
+    let remove = document.createElement("button");
+    remove.textContent = "×";
+    remove.addEventListener("click", () => {
+      ActSessions.remove(sess.id);
+      renderSessions();
+    });
+    row.append(remove);
+    container.append(row);
+  }
 }
 
 function showUpdateState() {
@@ -277,9 +313,22 @@ if (accentInput) {
     Services.prefs.setStringPref("act.accentColor", accentInput.value);
   });
 }
+let themeSelect = $("theme-select");
+if (themeSelect) {
+  themeSelect.addEventListener("change", () => {
+    Services.prefs.setStringPref("act.theme", themeSelect.value);
+  });
+}
 $("sync-account").addEventListener("click", () => {
   ActTabSync.openAccountSettings(win);
   win.ActPopup.close();
+});
+$("save-session")?.addEventListener("click", () => {
+  let name = prompt("Session name:", `Session ${ActSessions.list().length + 1}`);
+  if (name !== null) {
+    ActSessions.capture(name);
+    renderSessions();
+  }
 });
 $("check-updates").addEventListener("click", () => ActUpdater.check());
 $("force-update").addEventListener("click", () => ActUpdater.forceCheck());

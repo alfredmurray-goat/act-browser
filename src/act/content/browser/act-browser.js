@@ -44,6 +44,7 @@ var ActBrowser = {
         PREF.actuentSiteActions,
         PREF.compactMode,
         PREF.accentColor,
+        PREF.theme,
         PREF.sidebarToolbar,
         PREF.extensionsInSidebar,
         PREF.workspacesEnabled,
@@ -79,6 +80,8 @@ var ActBrowser = {
       ActUploadMenu,
       ActUpdateBar,
       ActCommandPalette,
+      ActDownloads,
+      ActReadingListUI,
       ActTabHibernation,
       ActSplitView,
     ]) {
@@ -103,6 +106,12 @@ var ActBrowser = {
     let root = document.documentElement;
     let vertical = Services.prefs.getBoolPref("sidebar.verticalTabs", false);
     root.toggleAttribute("act-compact", this.prefs.compactMode);
+    let theme = this.prefs.theme || "dark";
+    root.setAttribute("act-theme", theme);
+    if (theme == "auto") {
+      let dark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      root.setAttribute("act-theme", dark ? "dark" : "light");
+    }
     let accent = this.prefs.accentColor || "#6d5dfc";
     root.style.setProperty("--act-accent", accent);
     root.style.setProperty("--act-accent-soft", `color-mix(in srgb, ${accent} 14%, transparent)`);
@@ -153,6 +162,26 @@ var ActBrowser = {
   toggleFocusMode() {
     let on = !document.documentElement.hasAttribute("act-focus");
     this.setFocusMode(on);
+  },
+
+  togglePiP() {
+    try {
+      let browser = gBrowser?.selectedBrowser;
+      let doc = browser?.contentDocument;
+      if (!doc) return;
+      let video = doc.querySelector("video");
+      if (!video) {
+        gNotificationBox?.appendNotification("act-pip", { label: "No video found on this page.", priority: gNotificationBox.PRIORITY_INFO_LOW });
+        return;
+      }
+      if (document.pictureInPictureElement) {
+        document.exitPictureInPicture();
+      } else {
+        video.requestPictureInPicture();
+      }
+    } catch (e) {
+      console.error(e);
+    }
   },
 
   _ensureFocusExit(on) {
@@ -212,6 +241,8 @@ var ActBrowser = {
         "explore": "KeyE",
         "compact": "KeyC",
         "focus": "KeyF",
+        "readinglist": "KeyR",
+        "pip": "KeyP",
         "tabgroup": "KeyG",
         "workspaceNext": "ArrowRight",
         "workspacePrev": "ArrowLeft",
@@ -233,6 +264,12 @@ var ActBrowser = {
         break;
       case "focus":
         this.toggleFocusMode();
+        break;
+      case "readinglist":
+        ActReadingListUI.toggle();
+        break;
+      case "pip":
+        this.togglePiP();
         break;
       case "tabgroup":
         ActTabGroups.create();

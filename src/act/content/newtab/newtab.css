@@ -658,3 +658,50 @@ main {
   border-radius: 7px;
 }
 
+
+
+/* --- Widgets --------------------------------------------------------------- */
+
+.widget-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.widget {
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: var(--bg-2);
+}
+
+.clock-widget .widget-time {
+  font-size: 2em;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.clock-widget .widget-date {
+  color: var(--muted);
+  font-size: 0.9em;
+}
+
+.widget-title {
+  font-weight: 600;
+  margin-bottom: 8px;
+  font-size: 0.9em;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.widget-notes {
+  width: 100%;
+  min-height: 80px;
+  border: none;
+  background: transparent;
+  resize: vertical;
+  font: inherit;
+  color: var(--text);
+}

@@ -147,6 +147,7 @@
     <label class="switch"><input type="checkbox" data-pref="act.extensions.inSidebar"><span>Extensions in the sidebar</span></label>
     <label class="switch"><input type="checkbox" data-pref="act.newtab.enabled"><span>Act new tab page</span></label>
   <label class="row wrap"><span>Accent color</span><input type="color" id="accent-color" data-pref="act.accentColor" value="#6d5dfc"></label>
+  <label class="row wrap"><span>Theme</span><select id="theme-select"><option value="dark">Dark</option><option value="light">Light</option><option value="auto">Auto</option></select></label>
     <label class="switch"><input type="checkbox" data-pref="act.weather.enabled"><span>Weather on the new tab (Rejn)</span></label>
     <label class="switch"><input type="checkbox" data-pref="act.weather.useMyLocation"><span>Weather for my location</span></label>
     <p class="hint">Otherwise it shows the place in <code>act.weather.location</code> (set lat/lon next to it in about:config).</p>
@@ -164,7 +165,13 @@
     <label class="switch"><input type="checkbox" data-pref="act.framing.allowAll"><span>Let sites show any site in a frame</span></label>
     <p class="hint">Ignores "don't embed me" rules (X-Frame-Options, frame-ancestors). Framed sites still don't get your cookies.</p>
 
-    <h2>Updates</h2>
+    <h2>Sessions</h2>
+  <div class="row wrap">
+    <button id="save-session">Save current session</button>
+  </div>
+  <div id="session-list"></div>
+
+  <h2>Updates</h2>
     <label class="switch"><input type="checkbox" data-pref="act.update.enabled"><span>Update automatically</span></label>
     <div class="row wrap">
       <button id="check-updates">Check now</button>

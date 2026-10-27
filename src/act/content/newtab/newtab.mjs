@@ -20,6 +20,7 @@ const api = window.ActNewTab;
 const LIVE_DELAY_MS = 450;
 const LIVE_MIN_CHARS = 3;
 
+try { document.documentElement.setAttribute("act-theme", Services.prefs.getStringPref("act.theme", "dark")); } catch {}
 let state = null;
 let searchTicket = 0;
 let liveTimer = null;
@@ -391,6 +392,44 @@ function siteTile(site, action) {
 
 let savedSites = [];
 
+async function renderWidgets() {
+  let container = $("widgets");
+  if (!container) return;
+  container.replaceChildren();
+  // Clock widget
+  let clock = document.createElement("div");
+  clock.className = "widget clock-widget";
+  let time = document.createElement("div");
+  time.className = "widget-time";
+  let date = document.createElement("div");
+  date.className = "widget-date";
+  clock.append(time, date);
+  container.append(clock);
+  function tick() {
+    let now = new Date();
+    time.textContent = now.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
+    date.textContent = now.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
+  }
+  tick();
+  setInterval(tick, 1000);
+
+  // Notes widget
+  let notes = document.createElement("div");
+  notes.className = "widget notes-widget";
+  let notesTitle = document.createElement("div");
+  notesTitle.className = "widget-title";
+  notesTitle.textContent = "Quick notes";
+  let textarea = document.createElement("textarea");
+  textarea.className = "widget-notes";
+  textarea.placeholder = "Type a note...";
+  try { textarea.value = localStorage.getItem("act-notes") || ""; } catch {}
+  textarea.addEventListener("input", () => {
+    try { localStorage.setItem("act-notes", textarea.value); } catch {}
+  });
+  notes.append(notesTitle, textarea);
+  container.append(notes);
+}
+
 async function renderSites(saved) {
   savedSites = saved || (await api.savedSites().catch(() => [])) || [];
   let savedUrls = new Set(savedSites.map(s => s.url));
@@ -634,6 +673,7 @@ if (api) {
   buildWallpaperPicker();
   loadWallpaper();
   loadState();
+  renderWidgets();
   renderSites();
   // No autofocus here: a new tab focuses the address bar, and grabbing focus
   // back mid-typing is what made keystrokes jump between the two boxes.

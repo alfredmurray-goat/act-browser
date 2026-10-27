@@ -8,6 +8,9 @@ const lazy = {};
 ChromeUtils.defineESModuleGetters(lazy, {
   AboutNewTab: "resource:///modules/AboutNewTab.sys.mjs",
   ActAgents: "resource://act/ActAgents.sys.mjs",
+  ActReadingList: "resource://act/ActReadingList.sys.mjs",
+  ActSessions: "resource://act/ActSessions.sys.mjs",
+  ActClips: "resource://act/ActClips.sys.mjs",
   ActExtensionInstaller: "resource://act/ActExtensionInstaller.sys.mjs",
   ActExtensions: "resource://act/ActExtensions.sys.mjs",
   ActPasskeys: "resource://act/ActPasskeys.sys.mjs",
@@ -44,6 +47,7 @@ const WINDOW_SCRIPTS = [
   "chrome://act/content/browser/act-upload.js",
   "chrome://act/content/browser/act-updates.js",
   "chrome://act/content/browser/act-downloads.js",
+  "chrome://act/content/browser/act-reading-list.js",
   "chrome://act/content/browser/act-command-palette.js",
 ];
 

@@ -233,9 +233,73 @@ var ActCorner = {
     });
     weather.append(this._el("span", "act-glance-temp"), this._el("span", "act-glance-place"), credit);
 
-    glance.append(clock, weather);
+    // Pomodoro timer
+    let timer = this._el("div", "act-glance-timer");
+    timer.hidden = true;
+    let timerBtn = this._button("act-timer-btn", "Start 25-minute focus timer", () => this._toggleTimer());
+    timerBtn.textContent = "🍅";
+    let timerDisplay = this._el("span", "act-glance-timer-display", "");
+    timer.append(timerBtn, timerDisplay);
+    glance.append(clock, weather, timer);
     this.corner.append(glance);
     this.glance = glance;
+    this._timerEl = timer;
+    this._timerInterval = null;
+    this._timerRemaining = 0;
+    this._timerRunning = false;
+    this._timerDisplay = timerDisplay;
+    this._timerBtn = timerBtn;
+  },
+
+  _toggleTimer() {
+    if (this._timerRunning) {
+      this._stopTimer();
+    } else {
+      this._startTimer(25 * 60);
+    }
+  },
+
+  _startTimer(seconds) {
+    this._timerRunning = true;
+    this._timerRemaining = seconds;
+    this._timerEl.hidden = false;
+    this._timerBtn.textContent = "⏹";
+    this._timerBtn.title = "Stop timer";
+    this._updateTimerDisplay();
+    this._timerInterval = setInterval(() => {
+      this._timerRemaining--;
+      if (this._timerRemaining <= 0) {
+        this._stopTimer();
+        try {
+          Services.obs.notifyObservers(null, "alertservice-alert-show", "Focus timer done!");
+        } catch {}
+        // Play a beep via notification
+        try {
+          let box = gNotificationBox;
+          box?.appendNotification("act-timer-done", { label: "Focus timer complete! Take a break.", priority: box.PRIORITY_INFO_MEDIUM });
+        } catch {}
+      } else {
+        this._updateTimerDisplay();
+      }
+    }, 1000);
+  },
+
+  _stopTimer() {
+    this._timerRunning = false;
+    if (this._timerInterval) {
+      clearInterval(this._timerInterval);
+      this._timerInterval = null;
+    }
+    this._timerBtn.textContent = "🍅";
+    this._timerBtn.title = "Start 25-minute focus timer";
+    this._timerDisplay.textContent = "";
+    this._timerEl.hidden = true;
+  },
+
+  _updateTimerDisplay() {
+    let m = Math.floor(this._timerRemaining / 60);
+    let sec = this._timerRemaining % 60;
+    this._timerDisplay.textContent = `${m}:${String(sec).padStart(2, "0")}`;
   },
 
   _tickClock() {

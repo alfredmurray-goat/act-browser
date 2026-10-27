@@ -350,6 +350,10 @@ var ActWorkspaces = {
         i < 9 ? `${ws.name} (Ctrl+Alt+${i + 1})` : ws.name
       );
       button.toggleAttribute("selected", ws.id == this.active);
+      let count = this._tabsIn(ws.id).length;
+      if (count > 0) {
+        button.setAttribute("badge", String(count));
+      }
       return button;
     });
 

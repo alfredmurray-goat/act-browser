@@ -3,7 +3,19 @@
 What's new in each version of Act Browser. The browser shows this after it
 updates (turn that off with `act.changelog.enabled` in about:config).
 
+## 0.7.8
+
+- Reading List: sidebar panel with save-for-later, read/unread, tags, sync.
+- Session snapshots: save/restore named sets of tabs and workspaces.
+- Theme system: light/dark/auto toggle plus accent color picker.
+- Web clipper: clip selections to notes from the context menu.
+- Picture-in-Picture: toggle PiP from context menu or Ctrl+Alt+P.
+- Custom new tab widgets: clock and quick notes on the new tab page.
+- Tab count badge on workspace strip.
+- Focus timer (Pomodoro) in the sidebar corner.
+
 ## 0.7.7
+
 
 - Accent color picker in Settings (personalize the browser's accent).
 - Focus Mode (Ctrl+Alt+F): hides sidebar and toolbar for distraction-free browsing.

@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src chrome:; img-src chrome: https: data:; style-src chrome: 'unsafe-inline';">
+  <link rel="stylesheet" href="chrome://act/content/shared/act.css">
+  <link rel="stylesheet" href="reading-list.css">
+  <script type="module" src="reading-list.mjs"></script>
+</head>
+<body>
+  <header class="rl-header">
+    <h1>Reading List</h1>
+    <div class="rl-filters">
+      <button class="rl-filter active" data-filter="all">All</button>
+      <button class="rl-filter" data-filter="unread">Unread</button>
+      <button class="rl-filter" data-filter="read">Read</button>
+    </div>
+  </header>
+  <div id="rl-list" class="rl-list"></div>
+  <div id="rl-empty" class="rl-empty" hidden>Your reading list is empty. Save pages with the context menu or toolbar.</div>
+</body>
+</html>

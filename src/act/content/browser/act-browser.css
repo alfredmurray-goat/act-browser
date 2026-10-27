@@ -1214,3 +1214,56 @@
   border: none;
   background: transparent;
 }
+
+
+/* --- Workspace tab count badge -------------------------------------------- */
+
+.act-workspace[badge]::after {
+  content: attr(badge);
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  min-width: 14px;
+  height: 14px;
+  padding: 0 3px;
+  border-radius: 7px;
+  background: var(--act-accent);
+  color: white;
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 14px;
+  text-align: center;
+}
+
+.act-workspace {
+  position: relative;
+}
+
+
+/* --- Pomodoro timer -------------------------------------------------------- */
+
+.act-glance-timer {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.act-glance-timer-display {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  color: var(--act-accent);
+}
+
+
+/* --- Light theme overrides ------------------------------------------------- */
+
+:root[act-theme="light"] {
+  color-scheme: light;
+}
+
+:root[act-theme="light"] #navigator-toolbox,
+:root[act-theme="light"] #browser,
+:root[act-theme="light"] #sidebar-container {
+  background-color: #f4f4f6;
+}

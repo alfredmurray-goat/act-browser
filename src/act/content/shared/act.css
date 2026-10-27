@@ -19,6 +19,20 @@
   color-scheme: dark;
 }
 
+:root[act-theme="light"] {
+  --accent: #6d5dfc;
+  --accent-soft: color-mix(in srgb, var(--accent) 12%, transparent);
+  --bg: #ffffff;
+  --bg-2: #f4f4f6;
+  --text: #1c1b22;
+  --muted: #6b6a73;
+  --border: #e3e2e8;
+  --good: #1a7f37;
+  --bad: #c62828;
+  color-scheme: light;
+}
+
+
 
 
 * {
