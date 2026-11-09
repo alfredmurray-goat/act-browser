@@ -28,6 +28,7 @@ Grab the latest from the [releases page](https://github.com/alfredmurray-goat/ac
 | | Download | |
 | --- | --- | --- |
 | **macOS** | `Act-Browser-…-mac.dmg` | Open it and drag Act Browser to Applications |
+| **macOS**, no Gatekeeper detour | [install script](#macos-install) or [Homebrew](#homebrew) | One line in Terminal; opens on the first try |
 | **Windows** | `Act-Browser-…-win64-setup.exe` | Installs for your user, no admin needed |
 | **Linux** | `act-browser_…_amd64.deb` | `sudo apt install ./act-browser_…_amd64.deb` |
 | | `Act-Browser-…-linux-x86_64.tar.xz` | Unpack anywhere and run `act-browser/act-browser` |
@@ -35,12 +36,42 @@ Grab the latest from the [releases page](https://github.com/alfredmurray-goat/ac
 After that it updates itself (the `.deb` installs into `/opt`, which it
 can't write to; install the next `.deb` instead, or use the tarball).
 
+### macOS install
+
+Act Browser isn't notarized by Apple yet, so a copy downloaded in Safari or
+Chrome carries the quarantine flag and macOS refuses to open it ("cannot be
+verified" or "is damaged"). Two install paths avoid that entirely, because
+they fetch the app with `curl` instead of a browser:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/alfredmurray-goat/act-browser/main/scripts/install-macos.sh | bash
+```
+
+That downloads the latest release, quits any running copy, replaces
+`/Applications/Act Browser.app`, clears quarantine flags and opens it. Run
+the same line again to update. Pin a version with `… | bash -s -- 0.7.10`.
+
+<h4 id="homebrew">Homebrew</h4>
+
+```bash
+brew tap alfredmurray-goat/act-browser https://github.com/alfredmurray-goat/act-browser
+brew install --cask act-browser
+```
+
+Update with `brew reinstall --cask act-browser`.
+
+If you already downloaded the `.dmg` the normal way, you can either run the
+one-line installer above (it fixes an app you've already installed) or open
+the app once with **right-click › Open**, or **System Settings › Privacy &
+Security › Open Anyway**.
+
 The first time you open it:
 
 - **macOS** says it can't check the app for malware, because it isn't
-  notarized with an Apple developer account. Open *System Settings ›
-  Privacy & Security*, scroll down and click *Open Anyway*. Only needed
-  once.
+  notarized with an Apple developer account. If you used the install script
+  or Homebrew above, this doesn't happen. Otherwise open *System Settings ›
+  Privacy & Security*, scroll down and click *Open Anyway* (or right-click
+  the app and choose *Open*). Only needed once.
 - **Windows** SmartScreen may say it "protected your PC". Click *More info ›
   Run anyway*. Same reason: no paid code signing certificate yet.
 - **Bitwarden** opens its own welcome tab. Log in or create a free account

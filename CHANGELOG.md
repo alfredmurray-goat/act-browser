@@ -3,6 +3,19 @@
 What's new in each version of Act Browser. The browser shows this after it
 updates (turn that off with `act.changelog.enabled` in about:config).
 
+## 0.7.10
+
+- macOS: a one-line installer that skips the "unidentified developer" block.
+  `curl -fsSL https://raw.githubusercontent.com/alfredmurray-goat/act-browser/main/scripts/install-macos.sh | bash`
+  downloads the release, installs it in /Applications, clears the quarantine
+  flag and opens it. Running it again updates in place.
+- macOS: Homebrew cask (Casks/act-browser.rb), installable from this repo.
+- Act Browser now clears the quarantine flag from its own bundle if it finds
+  one, so a copy that was opened once can't turn "damaged" after an update.
+- Settings > Updates links to the one-line installer for anyone stuck on the
+  macOS first-run prompt.
+- Release notes explain the macOS step right next to the downloads.
+
 ## 0.7.9
 
 - Fix: Windows smoke test (increased extension install wait, more defensive init).

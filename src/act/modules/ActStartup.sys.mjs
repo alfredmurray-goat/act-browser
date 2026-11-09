@@ -277,6 +277,55 @@ export const ActStartup = {
       this._applyNewTab();
       this._setHomepage();
     });
+
+    this._clearQuarantine();
+  },
+
+  // Act Browser isn't notarized, so macOS puts com.apple.quarantine on any
+  // copy downloaded in a browser. Gatekeeper lets it through after an "Open
+  // anyway", but the flag stays behind: it can block the bundle again after
+  // an update swaps it out, and it makes every nested file take a Gatekeeper
+  // trip. The app is running at this point, so clearing the flag is safe and
+  // saves people from a second refusal.
+  _clearQuarantine() {
+    if (Services.appinfo.OS != "Darwin") {
+      return;
+    }
+    try {
+      let exe = Services.dirsvc.get("XREExeF", Ci.nsIFile);
+      let bundle = exe.parent.parent.parent;
+      if (!bundle.path.endsWith(".app")) {
+        return;
+      }
+      let tool = Cc["@mozilla.org/file/local;1"].createInstance(Ci.nsIFile);
+      tool.initWithPath("/usr/bin/xattr");
+      if (!tool.exists()) {
+        return;
+      }
+      // Off the startup path; xattr is a few milliseconds either way.
+      Services.tm.idleDispatchToMainThread(async () => {
+        try {
+          let { Subprocess } = ChromeUtils.importESModule(
+            "resource://gre/modules/Subprocess.sys.mjs"
+          );
+          let { exitCode } = await Subprocess.call({
+            command: "/usr/bin/xattr",
+            arguments: ["-p", "com.apple.quarantine", bundle.path],
+          });
+          if (exitCode != 0) {
+            return; // No flag, which is the usual case.
+          }
+          await Subprocess.call({
+            command: "/usr/bin/xattr",
+            arguments: ["-dr", "com.apple.quarantine", bundle.path],
+          });
+        } catch (e) {
+          console.error("Act: clearing quarantine", e);
+        }
+      }, 2000);
+    } catch (e) {
+      console.error("Act: quarantine check", e);
+    }
   },
 
   // The toolbar row on top of the tab sidebar only has room for a handful

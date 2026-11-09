@@ -117,3 +117,40 @@ jobs:
             --repo "$GITHUB_REPOSITORY" \
             --title "Act Browser ${GITHUB_REF_NAME#v}" \
             --generate-notes
+
+      # Act Browser isn't notarized, so the .dmg is quarantined on download and
+      # macOS refuses to open it. Say so at the top of the release, next to the
+      # download buttons, with the two ways around it.
+      - name: Add the macOS first-run note
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cat > note.md <<'EOF'
+          ## macOS: install it without the Gatekeeper block
+
+          Act Browser isn't notarized by Apple yet, so a copy downloaded in a
+          browser carries the quarantine flag and macOS refuses to open it
+          ("cannot be verified" or "is damaged"). Fetch it with curl instead:
+
+          ```bash
+          curl -fsSL https://raw.githubusercontent.com/alfredmurray-goat/act-browser/main/scripts/install-macos.sh | bash
+          ```
+
+          That installs or updates `/Applications/Act Browser.app` and opens it.
+          Homebrew works too:
+
+          ```bash
+          brew tap alfredmurray-goat/act-browser https://github.com/alfredmurray-goat/act-browser
+          brew install --cask act-browser
+          ```
+
+          Already downloaded the `.dmg`? Run the curl line above (it repairs the
+          copy you installed), or open the app once with right-click › Open.
+
+          ---
+
+          EOF
+          body="$(gh release view "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --json body -q .body)"
+          cp note.md release-notes.md
+          printf '%s\n' "$body" >> release-notes.md
+          gh release edit "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --notes-file release-notes.md
